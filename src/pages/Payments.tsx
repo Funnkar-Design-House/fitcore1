@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SearchInput } from '@/components/ui/search-input';
-import { payments } from '@/data/mockData';
+import { useData } from '@/contexts/DataContext';
 import { CreditCard, Banknote, Smartphone, Building, Download, Plus } from 'lucide-react';
 
 const methodIcons = {
@@ -12,6 +12,7 @@ const methodIcons = {
 };
 
 export default function Payments() {
+  const { payments } = useData();
   const [search, setSearch] = useState('');
 
   const filteredPayments = payments.filter(

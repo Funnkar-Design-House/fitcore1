@@ -31,7 +31,7 @@ export default function Login() {
               <Dumbbell className="h-9 w-9 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-display text-4xl font-bold text-foreground">FitCore</h1>
+              <h1 className="font-display text-4xl font-bold text-foreground">CheckInChaser</h1>
               <p className="text-muted-foreground">Gym Management System</p>
             </div>
           </div>
@@ -72,7 +72,7 @@ export default function Login() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
               <Dumbbell className="h-7 w-7 text-primary-foreground" />
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground">FitCore</h1>
+            <h1 className="font-display text-2xl font-bold text-foreground">CheckInChaser</h1>
           </div>
 
           <div className="text-center lg:text-left mb-8">
@@ -88,7 +88,7 @@ export default function Login() {
               <input
                 id="email"
                 type="email"
-                placeholder="admin@fitcore.com"
+                placeholder="admin@checkinchaser.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-12 w-full rounded-lg border border-border bg-card px-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"

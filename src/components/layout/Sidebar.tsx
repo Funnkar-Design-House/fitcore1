@@ -2,7 +2,6 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
-  UserPlus,
   CreditCard,
   ClipboardList,
   AlertTriangle,
@@ -15,7 +14,6 @@ import {
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/members', label: 'Members', icon: Users },
-  { path: '/add-member', label: 'Add Member', icon: UserPlus },
   { path: '/plans', label: 'Membership Plans', icon: CreditCard },
   { path: '/payments', label: 'Payments', icon: ClipboardList },
   { path: '/entry-log', label: 'Entry Log', icon: LogIn },
@@ -54,7 +52,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <Dumbbell className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-display text-lg font-bold text-foreground">FitCore</h1>
+                <h1 className="font-display text-lg font-bold text-foreground">CheckInChaser</h1>
                 <p className="text-xs text-muted-foreground">Gym Management</p>
               </div>
             </div>

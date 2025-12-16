@@ -82,11 +82,11 @@ export default function Settings() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="gym-name">Gym Name</Label>
-                    <Input id="gym-name" placeholder="FitCore Gym" defaultValue="FitCore Gym" />
+                    <Input id="gym-name" placeholder="CheckInChaser Gym" defaultValue="CheckInChaser Gym" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="gym-email">Email Address</Label>
-                    <Input id="gym-email" type="email" placeholder="info@fitcore.com" defaultValue="info@fitcore.com" />
+                    <Input id="gym-email" type="email" placeholder="info@checkinchaser.com" defaultValue="info@checkinchaser.com" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="gym-phone">Phone Number</Label>
@@ -94,7 +94,7 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="gym-website">Website</Label>
-                    <Input id="gym-website" placeholder="www.fitcore.com" defaultValue="www.fitcore.com" />
+                    <Input id="gym-website" placeholder="www.checkinchaser.com" defaultValue="www.checkinchaser.com" />
                   </div>
                 </div>
 
@@ -546,7 +546,7 @@ export default function Settings() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="upi-id">UPI ID</Label>
-                      <Input id="upi-id" placeholder="fitcore@paytm" defaultValue="fitcore@paytm" />
+                      <Input id="upi-id" placeholder="checkinchaser@paytm" defaultValue="checkinchaser@paytm" />
                     </div>
                   </div>
                 </div>

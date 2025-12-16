@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SearchInput } from '@/components/ui/search-input';
 import { FilterChip } from '@/components/ui/filter-chip';
-import { entryLogs } from '@/data/mockData';
+import { useData } from '@/contexts/DataContext';
 import { Clock, UserCheck, UserX, RefreshCw } from 'lucide-react';
 
 type FilterType = 'all' | 'allowed' | 'denied';
 
 export default function EntryLog() {
+  const { entryLogs } = useData();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [currentTime, setCurrentTime] = useState(new Date());

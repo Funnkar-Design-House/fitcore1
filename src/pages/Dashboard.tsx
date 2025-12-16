@@ -1,6 +1,6 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { dashboardStats, entryLogs, members } from '@/data/mockData';
+import { useData } from '@/contexts/DataContext';
 import {
   Users,
   UserCheck,
@@ -12,8 +12,50 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 
 export default function Dashboard() {
+  const { members, entryLogs, payments } = useData();
+
+  // Calculate dashboard stats dynamically
+  const dashboardStats = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const activeMembers = members.filter((m) => m.status === 'active').length;
+    const expiredMembers = members.filter((m) => m.status === 'expired').length;
+    const expiringMembers = members.filter((m) => m.status === 'expiring').length;
+
+    const todayEntries = entryLogs.filter((log) => log.timestamp.startsWith(today));
+    const todayCheckIns = todayEntries.length;
+
+    const todayPayments = payments.filter((p) => p.date === today);
+    const todayRevenue = todayPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    const monthlyPayments = payments.filter((p) => {
+      const paymentDate = new Date(p.date);
+      return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+    });
+    const monthlyRevenue = monthlyPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    const newMembersThisMonth = members.filter((m) => {
+      const joinDate = new Date(m.joinDate);
+      return joinDate.getMonth() === currentMonth && joinDate.getFullYear() === currentYear;
+    }).length;
+
+    return {
+      totalMembers: members.length,
+      activeMembers,
+      expiredMembers,
+      expiringMembers,
+      todayCheckIns,
+      todayRevenue,
+      monthlyRevenue,
+      newMembersThisMonth,
+    };
+  }, [members, entryLogs, payments]);
+
   const recentEntries = entryLogs.slice(0, 5);
   const expiringMembers = members.filter((m) => m.status === 'expiring' || m.status === 'expired').slice(0, 4);
 
@@ -99,33 +141,40 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-4">
-            {recentEntries.map((entry, index) => (
-              <div
-                key={entry.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors animate-slide-in"
-                style={{ animationDelay: `${800 + index * 100}ms` }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">
-                      {entry.memberName.charAt(0)}
-                    </span>
+            {recentEntries.length > 0 ? (
+              recentEntries.map((entry, index) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors animate-slide-in"
+                  style={{ animationDelay: `${800 + index * 100}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-primary">
+                        {entry.memberName.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{entry.memberName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(entry.timestamp).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">{entry.memberName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(entry.timestamp).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
+                  <span className={entry.status === 'allowed' ? 'badge-allowed' : 'badge-denied'}>
+                    {entry.status}
+                  </span>
                 </div>
-                <span className={entry.status === 'allowed' ? 'badge-allowed' : 'badge-denied'}>
-                  {entry.status}
-                </span>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">No check-ins yet today</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -142,39 +191,46 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-4">
-            {expiringMembers.map((member, index) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors animate-slide-in"
-                style={{ animationDelay: `${900 + index * 100}ms` }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                      member.status === 'expired' ? 'bg-destructive/20' : 'bg-warning/20'
-                    }`}
-                  >
-                    <span
-                      className={`text-sm font-semibold ${
-                        member.status === 'expired' ? 'text-destructive' : 'text-warning'
+            {expiringMembers.length > 0 ? (
+              expiringMembers.map((member, index) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors animate-slide-in"
+                  style={{ animationDelay: `${900 + index * 100}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                        member.status === 'expired' ? 'bg-destructive/20' : 'bg-warning/20'
                       }`}
                     >
-                      {member.name.charAt(0)}
-                    </span>
+                      <span
+                        className={`text-sm font-semibold ${
+                          member.status === 'expired' ? 'text-destructive' : 'text-warning'
+                        }`}
+                      >
+                        {member.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{member.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {member.status === 'expired' ? 'Expired' : 'Expires'}{' '}
+                        {new Date(member.expiryDate).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">{member.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {member.status === 'expired' ? 'Expired' : 'Expires'}{' '}
-                      {new Date(member.expiryDate).toLocaleDateString()}
-                    </p>
-                  </div>
+                  <span className={member.status === 'expired' ? 'badge-expired' : 'badge-warning'}>
+                    {member.status === 'expired' ? 'Expired' : 'Expiring'}
+                  </span>
                 </div>
-                <span className={member.status === 'expired' ? 'badge-expired' : 'badge-warning'}>
-                  {member.status === 'expired' ? 'Expired' : 'Expiring'}
-                </span>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <UserCheck className="h-12 w-12 text-success mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">All memberships are active</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

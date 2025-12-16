@@ -19,7 +19,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Dumbbell className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-lg font-bold text-foreground">FitCore</span>
+          <span className="font-display text-lg font-bold text-foreground">CheckInChaser</span>
         </div>
         <button
           onClick={() => setSidebarOpen(true)}

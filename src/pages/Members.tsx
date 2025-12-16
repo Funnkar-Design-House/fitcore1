@@ -2,15 +2,87 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SearchInput } from '@/components/ui/search-input';
 import { FilterChip } from '@/components/ui/filter-chip';
-import { members } from '@/data/mockData';
-import { Phone, Mail, Edit, Eye, UserPlus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useData } from '@/contexts/DataContext';
+import { Phone, Mail, Edit, Eye, UserPlus, Check, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 type FilterType = 'all' | 'active' | 'expired' | 'expiring';
 
 export default function Members() {
+  const { members, membershipPlans, addMember } = useData();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    joinDate: new Date().toISOString().split('T')[0],
+  });
+  const { toast } = useToast();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Find the selected plan to calculate expiry date
+    const plan = membershipPlans.find((p) => p.name === selectedPlan);
+    if (!plan) {
+      toast({
+        title: 'Error',
+        description: 'Please select a membership plan.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Calculate expiry date
+    const joinDate = new Date(formData.joinDate);
+    const expiryDate = new Date(joinDate);
+    expiryDate.setMonth(expiryDate.getMonth() + plan.durationMonths);
+
+    // Determine status based on expiry date
+    const today = new Date();
+    const daysUntilExpiry = Math.floor((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    let status: 'active' | 'expired' | 'expiring' = 'active';
+    if (daysUntilExpiry < 0) {
+      status = 'expired';
+    } else if (daysUntilExpiry <= 7) {
+      status = 'expiring';
+    }
+
+    // Add the new member
+    addMember({
+      name: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      plan: selectedPlan,
+      joinDate: formData.joinDate,
+      expiryDate: expiryDate.toISOString().split('T')[0],
+      status,
+    });
+
+    toast({
+      title: 'Member Added Successfully!',
+      description: `${formData.name} has been registered with ${selectedPlan}.`,
+    });
+    
+    setDialogOpen(false);
+    // Reset form
+    setFormData({
+      name: '',
+      phone: '',
+      email: '',
+      joinDate: new Date().toISOString().split('T')[0],
+    });
+    setSelectedPlan('');
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
@@ -36,10 +108,135 @@ export default function Members() {
           <h1 className="font-display text-3xl font-bold text-foreground">Members</h1>
           <p className="mt-1 text-muted-foreground">Manage your gym members and their memberships.</p>
         </div>
-        <Link to="/add-member" className="btn-primary flex items-center gap-2 w-fit">
-          <UserPlus className="h-5 w-5" />
-          Add Member
-        </Link>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="btn-primary flex items-center gap-2 w-fit">
+              <UserPlus className="h-5 w-5" />
+              Add Member
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Add New Member
+              </DialogTitle>
+              <DialogDescription>
+                Register a new member to your gym.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-sm font-medium text-foreground">
+                    Full Name *
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    placeholder="Enter member's full name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="h-10 w-full rounded-lg border border-border bg-secondary/50 px-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="text-sm font-medium text-foreground">
+                    Phone Number *
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    required
+                    placeholder="+91 98765 43210"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="h-10 w-full rounded-lg border border-border bg-secondary/50 px-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-medium text-foreground">
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="member@email.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="h-10 w-full rounded-lg border border-border bg-secondary/50 px-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="joinDate" className="text-sm font-medium text-foreground">
+                    Join Date *
+                  </label>
+                  <input
+                    id="joinDate"
+                    name="joinDate"
+                    type="date"
+                    required
+                    value={formData.joinDate}
+                    onChange={handleChange}
+                    className="h-10 w-full rounded-lg border border-border bg-secondary/50 px-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Plan Selection */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-3 block">Select Membership Plan *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {membershipPlans.map((plan) => (
+                    <button
+                      key={plan.id}
+                      type="button"
+                      onClick={() => setSelectedPlan(plan.name)}
+                      className={`relative p-3 rounded-lg border-2 text-left transition-all ${
+                        selectedPlan === plan.name
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/50 bg-secondary/30'
+                      }`}
+                    >
+                      {selectedPlan === plan.name && (
+                        <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                      <p className="font-semibold text-foreground text-sm">{plan.name}</p>
+                      <p className="text-xs text-muted-foreground">{plan.duration}</p>
+                      <p className="mt-1 font-display text-lg font-bold text-primary">₹{plan.price.toLocaleString()}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <Button type="submit" className="flex-1">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Member
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setDialogOpen(false)}
+                  className="flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search & Filters */}
@@ -172,10 +369,10 @@ export default function Members() {
                 <UserPlus className="h-12 w-12 text-muted-foreground mx-auto" />
                 <p className="text-lg font-medium text-foreground">No members yet</p>
                 <p className="text-muted-foreground">Get started by adding your first member to the gym.</p>
-                <Link to="/add-member" className="inline-flex items-center gap-2 btn-primary mt-4">
+                <Button onClick={() => setDialogOpen(true)} className="inline-flex items-center gap-2 btn-primary mt-4">
                   <UserPlus className="h-5 w-5" />
                   Add First Member
-                </Link>
+                </Button>
               </div>
             ) : (
               <p className="text-muted-foreground">No members found matching your criteria.</p>

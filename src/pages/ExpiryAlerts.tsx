@@ -1,8 +1,9 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { members } from '@/data/mockData';
+import { useData } from '@/contexts/DataContext';
 import { AlertTriangle, Clock, Phone, Mail, MessageSquare, IndianRupee } from 'lucide-react';
 
 export default function ExpiryAlerts() {
+  const { members } = useData();
   const expiredMembers = members.filter((m) => m.status === 'expired');
   const expiringMembers = members.filter((m) => m.status === 'expiring');
 

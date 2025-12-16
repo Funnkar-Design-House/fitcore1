@@ -1,8 +1,9 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { membershipPlans } from '@/data/mockData';
+import { useData } from '@/contexts/DataContext';
 import { Check, Star, Edit, Plus } from 'lucide-react';
 
 export default function MembershipPlans() {
+  const { membershipPlans } = useData();
   return (
     <DashboardLayout>
       {/* Header */}

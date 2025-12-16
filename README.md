@@ -1,4 +1,4 @@
-# FitCore - Gym Management System
+# CheckInChaser - Gym Management System
 
 A modern gym management system built with React, TypeScript, and Vite. Currently operates with mock data while Supabase integration is set up for future database connectivity.
 
