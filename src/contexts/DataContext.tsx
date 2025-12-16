@@ -11,6 +11,7 @@ interface DataContextType {
   addPayment: (payment: Omit<Payment, 'id'>) => void;
   addEntryLog: (log: Omit<EntryLog, 'id'>) => void;
   updateMember: (id: string, member: Partial<Member>) => void;
+  updatePayment: (id: string, payment: Partial<Payment>) => void;
   deleteMember: (id: string) => void;
 }
 
@@ -85,7 +86,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updatePayment = (id: string, updates: Partial<Payment>) => {
+    setPayments((prev) =>
+      prev.map((payment) =>
+        payment.id === id ? { ...payment, ...updates } : payment
+      )
+    );
+  };
+
   const deleteMember = (id: string) => {
+    // Find member's last payment and add deactivation note
+    const memberPayments = payments.filter(p => p.memberId === id);
+    if (memberPayments.length > 0) {
+      // Sort by date to find the most recent payment
+      const sortedPayments = [...memberPayments].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      const lastPayment = sortedPayments[0];
+      
+      setPayments((prev) =>
+        prev.map((payment) =>
+          payment.id === lastPayment.id
+            ? { ...payment, notes: 'Member deactivated' }
+            : payment
+        )
+      );
+    }
+    
     setMembers((prev) => prev.filter((member) => member.id !== id));
   };
 
@@ -100,6 +127,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addPayment,
         addEntryLog,
         updateMember,
+        updatePayment,
         deleteMember,
       }}
     >
