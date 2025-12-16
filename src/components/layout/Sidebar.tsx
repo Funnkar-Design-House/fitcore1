@@ -52,8 +52,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <Dumbbell className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-display text-lg font-bold text-foreground">CheckInChaser</h1>
-                <p className="text-xs text-muted-foreground">Gym Management</p>
+                <h1 className="font-display text-lg font-bold text-foreground">...</h1>
+                <p className="text-xs text-muted-foreground">Attendance & Payment Management System</p>
               </div>
             </div>
             {/* Close button for mobile */}

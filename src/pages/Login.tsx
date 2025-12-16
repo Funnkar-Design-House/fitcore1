@@ -32,7 +32,7 @@ export default function Login() {
             </div>
             <div>
               <h1 className="font-display text-4xl font-bold text-foreground">CheckInChaser</h1>
-              <p className="text-muted-foreground">Gym Management System</p>
+              <p className="text-muted-foreground">Attendance & Payment Management System</p>
             </div>
           </div>
           
