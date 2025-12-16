@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { members as initialMembers, payments as initialPayments, entryLogs as initialEntryLogs, membershipPlans } from '@/data/mockData';
 import type { Member, Payment, EntryLog, MembershipPlan } from '@/data/mockData';
 
@@ -16,10 +16,42 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+// LocalStorage keys
+const STORAGE_KEYS = {
+  members: 'checkinchaser_members',
+  payments: 'checkinchaser_payments',
+  entryLogs: 'checkinchaser_entryLogs',
+};
+
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [members, setMembers] = useState<Member[]>(initialMembers);
-  const [payments, setPayments] = useState<Payment[]>(initialPayments);
-  const [entryLogs, setEntryLogs] = useState<EntryLog[]>(initialEntryLogs);
+  // Initialize state from localStorage or use initial data
+  const [members, setMembers] = useState<Member[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.members);
+    return stored ? JSON.parse(stored) : initialMembers;
+  });
+
+  const [payments, setPayments] = useState<Payment[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.payments);
+    return stored ? JSON.parse(stored) : initialPayments;
+  });
+
+  const [entryLogs, setEntryLogs] = useState<EntryLog[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.entryLogs);
+    return stored ? JSON.parse(stored) : initialEntryLogs;
+  });
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.members, JSON.stringify(members));
+  }, [members]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.payments, JSON.stringify(payments));
+  }, [payments]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.entryLogs, JSON.stringify(entryLogs));
+  }, [entryLogs]);
 
   const addMember = (member: Omit<Member, 'id'>) => {
     const newMember: Member = {
