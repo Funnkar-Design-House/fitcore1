@@ -48,6 +48,7 @@ export interface Payment {
   validityStart: string;
   validityEnd: string;
   plan: string;
+  notes?: string;
 }
 
 export interface EntryLog {
