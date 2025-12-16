@@ -88,12 +88,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             })}
           </nav>
 
-          {/* Footer */}
+          {/* Footer - Settings Button */}
           <div className="border-t border-border p-4">
-            <button className="nav-item w-full">
+            <NavLink
+              to="/settings"
+              onClick={onClose}
+              className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
+            >
               <Settings className="h-5 w-5" />
               <span className="font-medium">Settings</span>
-            </button>
+            </NavLink>
           </div>
         </div>
       </aside>

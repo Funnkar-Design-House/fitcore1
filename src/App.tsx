@@ -11,6 +11,7 @@ import MembershipPlans from "./pages/MembershipPlans";
 import Payments from "./pages/Payments";
 import EntryLog from "./pages/EntryLog";
 import ExpiryAlerts from "./pages/ExpiryAlerts";
+import Settings from "./pages/Settings";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/payments" element={<Payments />} />
           <Route path="/entry-log" element={<EntryLog />} />
           <Route path="/expiry-alerts" element={<ExpiryAlerts />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
