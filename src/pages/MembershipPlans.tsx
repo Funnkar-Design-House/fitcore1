@@ -1,9 +1,40 @@
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useData } from '@/contexts/DataContext';
-import { Check, Star, Edit, Plus } from 'lucide-react';
+import { Check, Star, Edit, Plus, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import type { MembershipPlan } from '@/data/mockData';
 
 export default function MembershipPlans() {
   const { membershipPlans } = useData();
+  const { toast } = useToast();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
+
+  const handleEditPlan = (plan: MembershipPlan) => {
+    setSelectedPlan(plan);
+    setEditDialogOpen(true);
+  };
+
+  const handleAddPlan = () => {
+    toast({
+      title: 'Feature in development',
+      description: 'Add new membership plan functionality coming soon.',
+    });
+  };
+
+  const handleSaveEdit = () => {
+    toast({
+      title: 'Plan updated',
+      description: `${selectedPlan?.name} plan has been updated successfully.`,
+    });
+    setEditDialogOpen(false);
+    setSelectedPlan(null);
+  };
+
   return (
     <DashboardLayout>
       {/* Header */}
@@ -12,7 +43,7 @@ export default function MembershipPlans() {
           <h1 className="font-display text-3xl font-bold text-foreground">Membership Plans</h1>
           <p className="mt-1 text-muted-foreground">Manage your gym's membership plans and pricing.</p>
         </div>
-        <button className="btn-primary flex items-center gap-2 w-fit">
+        <button onClick={handleAddPlan} className="btn-primary flex items-center gap-2 w-fit">
           <Plus className="h-5 w-5" />
           Add Plan
         </button>
@@ -41,7 +72,11 @@ export default function MembershipPlans() {
                   <h3 className="font-display text-xl font-bold text-foreground">{plan.name}</h3>
                   <p className="text-sm text-muted-foreground">{plan.duration}</p>
                 </div>
-                <button className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <button 
+                  onClick={() => handleEditPlan(plan)}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  title="Edit Plan"
+                >
                   <Edit className="h-4 w-4" />
                 </button>
               </div>
@@ -93,6 +128,76 @@ export default function MembershipPlans() {
           <p className="text-sm text-success mt-1">+5% from last month</p>
         </div>
       </div>
+
+      {/* Edit Plan Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Edit Membership Plan
+            </DialogTitle>
+            <DialogDescription>
+              Update plan details and pricing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPlan && (
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Plan Name</label>
+                <input
+                  type="text"
+                  defaultValue={selectedPlan.name}
+                  className="h-10 w-full rounded-lg border border-border bg-secondary/50 px-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Duration (Months)</label>
+                <input
+                  type="number"
+                  defaultValue={selectedPlan.durationMonths}
+                  className="h-10 w-full rounded-lg border border-border bg-secondary/50 px-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Price (₹)</label>
+                <input
+                  type="number"
+                  defaultValue={selectedPlan.price}
+                  className="h-10 w-full rounded-lg border border-border bg-secondary/50 px-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Features (one per line)</label>
+                <textarea
+                  rows={4}
+                  defaultValue={selectedPlan.features.join('\n')}
+                  className="w-full rounded-lg border border-border bg-secondary/50 px-4 py-2 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              
+              <div className="flex items-center gap-3 pt-4 border-t">
+                <Button onClick={handleSaveEdit} className="flex-1">
+                  <Check className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEditDialogOpen(false)}
+                  className="flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
