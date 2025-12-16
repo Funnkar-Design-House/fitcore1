@@ -10,6 +10,22 @@ export interface Member {
   expiryDate: string;
   status: 'active' | 'expired' | 'expiring';
   avatar?: string;
+  // Additional gym member fields
+  dateOfBirth?: string;
+  gender?: 'Male' | 'Female' | 'Other';
+  address?: string;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
+  medicalConditions?: string;
+  fitnessGoals?: string;
+  bloodGroup?: string;
+  height?: string; // in cm
+  weight?: string; // in kg
+  trainerAssigned?: string;
+  notes?: string;
 }
 
 export interface MembershipPlan {
