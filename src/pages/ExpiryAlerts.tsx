@@ -1,9 +1,27 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useData } from '@/contexts/DataContext';
 import { AlertTriangle, Clock, Phone, Mail, MessageSquare, IndianRupee } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import type { Member } from '@/data/mockData';
 
 export default function ExpiryAlerts() {
   const { members } = useData();
+  const { toast } = useToast();
+
+  const handleRenewMember = (member: Member) => {
+    toast({
+      title: 'Renewal initiated',
+      description: `Opening renewal form for ${member.name}. This will redirect to member edit page.`,
+    });
+    // In a full implementation, this would open a renewal dialog or redirect to payment page
+  };
+
+  const handleSendReminder = (member: Member, type: 'expired' | 'expiring') => {
+    toast({
+      title: 'Reminder sent',
+      description: `${type === 'expired' ? 'Renewal' : 'Expiry'} reminder sent to ${member.name} via SMS and email.`,
+    });
+  };
   const expiredMembers = members.filter((m) => m.status === 'expired');
   const expiringMembers = members.filter((m) => m.status === 'expiring');
 
@@ -118,10 +136,17 @@ export default function ExpiryAlerts() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors">
+                  <button 
+                    onClick={() => handleRenewMember(member)}
+                    className="flex-1 py-2 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+                  >
                     Renew Now
                   </button>
-                  <button className="py-2 px-4 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <button 
+                    onClick={() => handleSendReminder(member, 'expired')}
+                    className="py-2 px-4 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                    title="Send renewal reminder"
+                  >
                     <MessageSquare className="h-4 w-4" />
                   </button>
                 </div>
@@ -176,10 +201,17 @@ export default function ExpiryAlerts() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 px-4 rounded-lg bg-warning text-warning-foreground font-medium text-sm hover:bg-warning/90 transition-colors">
+                  <button 
+                    onClick={() => handleSendReminder(member, 'expiring')}
+                    className="flex-1 py-2 px-4 rounded-lg bg-warning text-warning-foreground font-medium text-sm hover:bg-warning/90 transition-colors"
+                  >
                     Send Reminder
                   </button>
-                  <button className="py-2 px-4 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <button 
+                    onClick={() => handleRenewMember(member)}
+                    className="py-2 px-4 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                    title="Open renewal form"
+                  >
                     <MessageSquare className="h-4 w-4" />
                   </button>
                 </div>
