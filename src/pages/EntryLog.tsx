@@ -188,7 +188,15 @@ export default function EntryLog() {
 
         {filteredLogs.length === 0 && (
           <div className="p-12 text-center">
-            <p className="text-muted-foreground">No entries found matching your criteria.</p>
+            {entryLogs.length === 0 ? (
+              <div className="space-y-3">
+                <Clock className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="text-lg font-medium text-foreground">No entry logs yet</p>
+                <p className="text-muted-foreground">Member check-ins will be recorded and displayed here.</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No entries found matching your criteria.</p>
+            )}
           </div>
         )}
       </div>

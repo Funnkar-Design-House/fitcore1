@@ -21,6 +21,7 @@ export default function Payments() {
   );
 
   const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+  const averagePayment = payments.length > 0 ? Math.round(totalRevenue / payments.length) : 0;
 
   return (
     <DashboardLayout>
@@ -57,7 +58,7 @@ export default function Payments() {
         <div className="stat-card animate-fade-in" style={{ animationDelay: '200ms' }}>
           <p className="text-sm text-muted-foreground">Average Payment</p>
           <p className="font-display text-3xl font-bold text-foreground mt-2">
-            ₹{Math.round(totalRevenue / payments.length).toLocaleString()}
+            ₹{averagePayment.toLocaleString()}
           </p>
         </div>
       </div>
@@ -145,7 +146,15 @@ export default function Payments() {
 
         {filteredPayments.length === 0 && (
           <div className="p-12 text-center">
-            <p className="text-muted-foreground">No payments found matching your search.</p>
+            {payments.length === 0 ? (
+              <div className="space-y-3">
+                <CreditCard className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="text-lg font-medium text-foreground">No payments recorded yet</p>
+                <p className="text-muted-foreground">Payment transactions will appear here once members are added.</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No payments found matching your search.</p>
+            )}
           </div>
         )}
       </div>

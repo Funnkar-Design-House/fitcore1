@@ -167,7 +167,19 @@ export default function Members() {
 
         {filteredMembers.length === 0 && (
           <div className="p-12 text-center">
-            <p className="text-muted-foreground">No members found matching your criteria.</p>
+            {members.length === 0 ? (
+              <div className="space-y-3">
+                <UserPlus className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="text-lg font-medium text-foreground">No members yet</p>
+                <p className="text-muted-foreground">Get started by adding your first member to the gym.</p>
+                <Link to="/add-member" className="inline-flex items-center gap-2 btn-primary mt-4">
+                  <UserPlus className="h-5 w-5" />
+                  Add First Member
+                </Link>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No members found matching your criteria.</p>
+            )}
           </div>
         )}
       </div>
