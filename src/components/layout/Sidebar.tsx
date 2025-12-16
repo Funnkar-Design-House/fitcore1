@@ -9,6 +9,7 @@ import {
   Dumbbell,
   Settings,
   X,
+  Calendar,
 } from 'lucide-react';
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { path: '/payments', label: 'Payments', icon: ClipboardList },
   { path: '/entry-log', label: 'Entry Log', icon: LogIn },
   { path: '/expiry-alerts', label: 'Expiry Alerts', icon: AlertTriangle },
+  { path: '/calendar', label: 'Calendar View', icon: Calendar },
 ];
 
 interface SidebarProps {
