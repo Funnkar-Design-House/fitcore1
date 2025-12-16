@@ -1,7 +1,7 @@
 # FitCore Gym Management System - AI Coding Guide
 
 ## Project Overview
-FitCore is a gym management system built with React + TypeScript + Vite. Currently operates with **mock data** in [src/data/mockData.ts](../src/data/mockData.ts) while Supabase integration is set up but not yet connected. This is a Lovable.dev project designed for rapid iteration.
+FitCore is a gym management system built with React + TypeScript + Vite. Currently operates with **mock data** in [src/data/mockData.ts](../src/data/mockData.ts) while Supabase integration is set up but not yet connected.
 
 ## Architecture & Data Flow
 

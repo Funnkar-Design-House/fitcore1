@@ -1,73 +1,100 @@
-# Welcome to your Lovable project
+# FitCore - Gym Management System
 
-## Project info
+A modern gym management system built with React, TypeScript, and Vite. Currently operates with mock data while Supabase integration is set up for future database connectivity.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- 📊 Dashboard with real-time statistics
+- 👥 Member management (add, view, search)
+- 💳 Payment tracking and history
+- 📋 Membership plans management
+- 🚪 Entry log monitoring
+- ⏰ Expiry alerts for memberships
+- 📱 Fully responsive mobile-first design
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Routing**: React Router v6
+- **State Management**: TanStack Query (ready for API integration)
+- **Database**: Supabase (configured but not yet connected)
+- **Package Manager**: Bun
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- [Bun](https://bun.sh) installed (or Node.js + npm)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+# Clone the repository
+git clone https://github.com/Funnkar-Design-House/fitcore1.git
 
-Follow these steps:
+# Navigate to the project directory
+cd fitcore1
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+bun install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Start the development server
+bun run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Build for Production
 
-**Use GitHub Codespaces**
+```bash
+bun run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Preview Production Build
 
-## What technologies are used for this project?
+```bash
+bun run preview
+```
 
-This project is built with:
+## Project Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+src/
+├── components/       # Reusable UI components
+│   ├── ui/          # shadcn/ui components
+│   ├── layout/      # Layout components (Sidebar, DashboardLayout)
+│   └── dashboard/   # Dashboard-specific components
+├── pages/           # Page components (Dashboard, Members, etc.)
+├── data/            # Mock data (mockData.ts)
+├── integrations/    # External integrations (Supabase client)
+├── lib/             # Utility functions
+└── hooks/           # Custom React hooks
+```
 
-## How can I deploy this project?
+## Current State
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+⚠️ **This project currently uses mock data** - all data is stored in `src/data/mockData.ts`
 
-## Can I connect a custom domain to my Lovable project?
+- ✅ Full UI/UX implementation
+- ✅ Supabase client configured
+- ✅ Database schema defined
+- ⏳ API integration pending (easy to connect)
 
-Yes, you can!
+## Future Roadmap
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- [ ] Connect Supabase backend
+- [ ] Implement authentication
+- [ ] Add real-time updates
+- [ ] Generate reports and analytics
+- [ ] Add payment gateway integration
+- [ ] Implement email notifications
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - see LICENSE file for details
