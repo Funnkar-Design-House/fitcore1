@@ -10,8 +10,11 @@ A modern gym management system built with React, TypeScript, and Vite. Currently
 - 📋 Membership plans management
 - 🚪 Entry log monitoring
 - ⏰ Expiry alerts for memberships
-- 📅 Calendar view for payments and expirations
+- 📅 Calendar view with month/year toggle and upcoming events sidebar
 - 💾 LocalStorage persistence (data survives page refreshes)
+- 📥 Export/Import data to JSON files for backup
+- 🔄 Restore data from backup files
+- 📊 Data statistics and management dashboard
 - 📱 Fully responsive mobile-first design
 - 🔍 Advanced search and filtering
 - 📝 Detailed member profiles with emergency contacts, medical info, and fitness goals
@@ -85,9 +88,21 @@ src/
 - ✅ Full UI/UX implementation
 - ✅ LocalStorage persistence (data survives refreshes)
 - ✅ Complete CRUD operations for members and payments
+- ✅ Export/Import functionality (download/upload JSON backups)
+- ✅ Data management dashboard with statistics
+- ✅ Clear all data option (with confirmation)
+- ✅ Enhanced calendar with month/year views
+- ✅ Upcoming events sidebar
 - ✅ Supabase client configured
 - ✅ Database schema defined
 - ⏳ API integration pending (easy to migrate from localStorage to Supabase)
+
+### Data Persistence
+- **Automatic saves**: All changes automatically saved to browser localStorage
+- **Export backup**: Download all data as JSON file (`Settings > Advanced > Data Management`)
+- **Import restore**: Upload backup JSON file to restore data
+- **Clear data**: Remove all data with confirmation prompt
+- **Survives**: Page refreshes, browser restarts (as long as localStorage isn't cleared)
 
 ## Future Roadmap
 
