@@ -10,6 +10,9 @@ CheckInChaser is a gym management system built with React + TypeScript + Vite. C
 - Data persists in localStorage across page refreshes (keys: `checkinchaser_members`, `checkinchaser_payments`, `checkinchaser_entryLogs`)
 - Initial data loaded from `@/data/mockData` on first visit, then managed in-memory with localStorage sync
 - Full CRUD operations: add, update, delete members/payments/entry logs
+- **Export/Import**: DataContext provides `exportData()`, `importData()`, and `clearAllData()` methods
+- **Backup files**: Downloaded as JSON with format `checkinchaser-backup-YYYY-MM-DD.json`
+- **Settings page**: [src/pages/Settings.tsx](../src/pages/Settings.tsx) Advanced tab has data management UI
 - Supabase client exists at [src/integrations/supabase/client.ts](../src/integrations/supabase/client.ts) but is **not yet used**
 - Database schema defined in [supabase/migrations/](../supabase/migrations/) includes tables for profiles, memberships, payments, and entry logs
 
@@ -57,7 +60,16 @@ bun run build    # Production build
 ```tsx
 // Correct: Use DataContext for state management
 import { useData } from '@/contexts/DataContext';
-const { members, addMember, updateMember, deleteMember } = useData();
+const { members, addMember, updateMember, deleteMember, exportData, importData, clearAllData } = useData();
+
+// Export data to JSON file
+exportData(); // Downloads JSON backup
+
+// Import data from JSON string
+importData(jsonString); // Restores from backup
+
+// Clear all data
+clearAllData(); // Shows confirmation, then wipes localStorage
 
 // Correct: Custom NavLink wrapper, NOT react-router-dom's NavLink directly
 import { NavLink } from '@/components/NavLink';
@@ -123,11 +135,16 @@ Edit [Sidebar.tsx](../src/components/layout/Sidebar.tsx):
 - **Toast Notifications**: Sonner library (see [App.tsx](../src/App.tsx)) for user feedback
 - **Loading States**: Skeleton components available but not used with mock data
 - **Error Handling**: NotFound page exists for 404s, no auth checks yet (all routes public)
+- **Calendar View**: [CalendarView.tsx](../src/pages/CalendarView.tsx) has month/year toggle, uses `viewMode` state
+- **Data Export**: FileReader API for import, Blob/URL.createObjectURL for export (see DataContext)
 
 ## Critical Notes
 
 ⚠️ **No real authentication**: Login page exists but doesn't enforce auth
 ⚠️ **LocalStorage only**: Data persists locally but not synced to cloud/database
+✅ **Export/Import works**: Can backup/restore data via JSON files
+✅ **Data survives restarts**: localStorage persists across browser sessions
 ⚠️ **Supabase client unused**: Integration code exists but queries not implemented
 ⚠️ **No tests**: Test infrastructure not set up yet
 ⚠️ **Single user mode**: No multi-tenancy, all data shared in browser localStorage
+⚠️ **Browser-specific**: Data won't sync across different browsers/devices
