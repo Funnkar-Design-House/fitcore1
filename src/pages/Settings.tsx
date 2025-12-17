@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useData } from '@/contexts/DataContext';
 import {
   Building2,
   Bell,
@@ -20,16 +21,50 @@ import {
   Clock,
   Globe,
   Save,
+  Download,
+  Upload,
+  Trash2,
 } from 'lucide-react';
+import { useRef } from 'react';
 
 export default function Settings() {
   const { toast } = useToast();
+  const { exportData, importData, clearAllData, members, payments, entryLogs } = useData();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = (section: string) => {
     toast({
       title: 'Settings saved',
       description: `${section} settings have been updated successfully.`,
     });
+  };
+
+  const handleExportData = () => {
+    exportData();
+    toast({
+      title: 'Data exported',
+      description: 'Your data has been exported to a JSON file.',
+    });
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        importData(content);
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleClearAllData = () => {
+    clearAllData();
   };
 
   return (
@@ -559,6 +594,30 @@ export default function Settings() {
                     Data Management
                   </h3>
                   <div className="space-y-4">
+                    {/* Data Statistics */}
+                    <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-2">
+                      <p className="text-sm font-medium text-foreground">Current Data:</p>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Members</p>
+                          <p className="text-lg font-bold text-foreground">{members.length}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Payments</p>
+                          <p className="text-lg font-bold text-foreground">{payments.length}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Entry Logs</p>
+                          <p className="text-lg font-bold text-foreground">{entryLogs.length}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        💾 Data is automatically saved to browser storage
+                      </p>
+                    </div>
+
+                    <Separator />
+
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label htmlFor="auto-backup">Automatic Backups</Label>
@@ -587,9 +646,44 @@ export default function Settings() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline">Export Data</Button>
-                      <Button variant="outline">Import Data</Button>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">Backup & Restore</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button onClick={handleExportData} variant="outline" className="gap-2">
+                          <Download className="h-4 w-4" />
+                          Export Data to File
+                        </Button>
+                        <Button onClick={handleImportClick} variant="outline" className="gap-2">
+                          <Upload className="h-4 w-4" />
+                          Import Data from File
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".json"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Export your data to a JSON file for backup. You can import it later to restore all members, payments, and entry logs.
+                      </p>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-destructive">Danger Zone</p>
+                      <Button onClick={handleClearAllData} variant="destructive" className="gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Clear All Data
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        ⚠️ This will permanently delete all members, payments, and entry logs. This action cannot be undone. Make sure to export your data first!
+                      </p>
                     </div>
                   </div>
                 </div>
