@@ -5,12 +5,16 @@ A modern gym management system built with React, TypeScript, and Vite. Currently
 ## Features
 
 - 📊 Dashboard with real-time statistics
-- 👥 Member management (add, view, search)
+- 👥 Member management (add, edit, delete, view, search, filter)
 - 💳 Payment tracking and history
 - 📋 Membership plans management
 - 🚪 Entry log monitoring
 - ⏰ Expiry alerts for memberships
+- 📅 Calendar view for payments and expirations
+- 💾 LocalStorage persistence (data survives page refreshes)
 - 📱 Fully responsive mobile-first design
+- 🔍 Advanced search and filtering
+- 📝 Detailed member profiles with emergency contacts, medical info, and fitness goals
 
 ## Tech Stack
 
@@ -66,8 +70,9 @@ src/
 │   ├── ui/          # shadcn/ui components
 │   ├── layout/      # Layout components (Sidebar, DashboardLayout)
 │   └── dashboard/   # Dashboard-specific components
-├── pages/           # Page components (Dashboard, Members, etc.)
-├── data/            # Mock data (mockData.ts)
+├── pages/           # Page components (Dashboard, Members, CalendarView, etc.)
+├── contexts/        # React Context providers (DataContext for state management)
+├── data/            # Initial mock data (mockData.ts)
 ├── integrations/    # External integrations (Supabase client)
 ├── lib/             # Utility functions
 └── hooks/           # Custom React hooks
@@ -75,12 +80,14 @@ src/
 
 ## Current State
 
-⚠️ **This project currently uses mock data** - all data is stored in `src/data/mockData.ts`
+⚠️ **This project currently uses localStorage for data persistence** - data is managed through DataContext in `src/contexts/DataContext.tsx` and initialized from `src/data/mockData.ts`
 
 - ✅ Full UI/UX implementation
+- ✅ LocalStorage persistence (data survives refreshes)
+- ✅ Complete CRUD operations for members and payments
 - ✅ Supabase client configured
 - ✅ Database schema defined
-- ⏳ API integration pending (easy to connect)
+- ⏳ API integration pending (easy to migrate from localStorage to Supabase)
 
 ## Future Roadmap
 
