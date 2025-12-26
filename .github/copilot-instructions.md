@@ -1,22 +1,17 @@
-# CheckInChaser Gym Management System - AI Coding Guide
+# CheckInChaser Gym Management System – AI Coding Guide
 
 ## Project Overview
-CheckInChaser is a gym management system built with React + TypeScript + Vite. Currently operates with **localStorage persistence** via DataContext in [src/contexts/DataContext.tsx](../src/contexts/DataContext.tsx), initialized from [src/data/mockData.ts](../src/data/mockData.ts). Supabase integration is set up but not yet connected.
+CheckInChaser is a gym management system built with React, TypeScript, and Vite. It currently uses **localStorage** for persistence via a DataContext ([src/contexts/DataContext.tsx](../src/contexts/DataContext.tsx)), with initial data from [src/data/mockData.ts](../src/data/mockData.ts). Supabase integration is scaffolded but not yet active.
 
 ## Architecture & Data Flow
 
-### Current State: LocalStorage Persistence Mode
-- **All pages** use `useData()` hook from [src/contexts/DataContext.tsx](../src/contexts/DataContext.tsx) for state management
-- Data persists in localStorage across page refreshes (keys: `checkinchaser_members`, `checkinchaser_payments`, `checkinchaser_entryLogs`)
-- Initial data loaded from `@/data/mockData` on first visit, then managed in-memory with localStorage sync
-- Full CRUD operations: add, update, delete members/payments/entry logs
-- **Export/Import**: DataContext provides `exportData()`, `importData()`, and `clearAllData()` methods
-- **Backup files**: Downloaded as JSON with format `checkinchaser-backup-YYYY-MM-DD.json`
-- **Settings page**: [src/pages/Settings.tsx](../src/pages/Settings.tsx) Advanced tab has data management UI
-- Supabase client exists at [src/integrations/supabase/client.ts](../src/integrations/supabase/client.ts) but is **not yet used**
-- Database schema defined in [supabase/migrations/](../supabase/migrations/) includes tables for profiles, memberships, payments, and entry logs
+- **State Management:** All pages use the `useData()` hook from DataContext for CRUD on members, payments, and entry logs. Data is synced to localStorage under keys: `checkinchaser_members`, `checkinchaser_payments`, `checkinchaser_entryLogs`.
+- **Initial Data:** Loaded from `@/data/mockData` on first visit, then managed in-memory with localStorage sync.
+- **Export/Import:** Use `exportData()`, `importData()`, and `clearAllData()` from DataContext. Backups are JSON files named `checkinchaser-backup-YYYY-MM-DD.json`.
+- **Settings:** Data management UI is in the Advanced tab of [src/pages/Settings.tsx](../src/pages/Settings.tsx).
+- **Supabase:** Client is set up at [src/integrations/supabase/client.ts](../src/integrations/supabase/client.ts) but not yet used. Schema is in [supabase/migrations/](../supabase/migrations/).
 
-### Key Component Structure
+**Component Structure:**
 ```
 App.tsx → DataProvider (wraps all routes)
             ↓
@@ -26,38 +21,98 @@ App.tsx → DataProvider (wraps all routes)
                                   ↓
                     localStorage sync + in-memory state
 ```
-
-- [DashboardLayout](../src/components/layout/DashboardLayout.tsx): Wraps all authenticated pages, includes Sidebar with mobile responsive toggle
-- [Sidebar](../src/components/layout/Sidebar.tsx): Uses custom `isOpen` prop (NOT the shadcn/ui sidebar pattern)
+- [DashboardLayout](../src/components/layout/DashboardLayout.tsx): Wraps all pages, includes Sidebar with mobile toggle
+- [Sidebar](../src/components/layout/Sidebar.tsx): Uses custom `isOpen` prop (not shadcn/ui sidebar)
 
 ## Development Workflow
 
-### Running the Project
-```bash
-# This project uses bun as package manager (note: bun.lockb exists)
-bun install      # Install dependencies
-bun run dev      # Start dev server on port 8080
-bun run build    # Production build
-```
+- **Install:** `bun install`
+- **Dev server:** `bun run dev` (http://localhost:8080)
+- **Build:** `bun run build`
+- **Preview:** `bun run preview`
 
-### Adding New Features
-1. **New Pages**: Add route in [App.tsx](../src/App.tsx) routes array (above the `"*"` catch-all)
-2. **Data Operations**: Use `useData()` hook to access members/payments/entryLogs and CRUD functions
-3. **New Data Types**: Extend interfaces in [src/data/mockData.ts](../src/data/mockData.ts) and add methods to [DataContext.tsx](../src/contexts/DataContext.tsx)
-4. **UI Components**: Use existing shadcn/ui components from [src/components/ui/](../src/components/ui/)
-5. **Navigation**: Update [Sidebar.tsx](../src/components/layout/Sidebar.tsx) with new nav items
+### Adding Features
+1. Add new page: create in `src/pages/`, wrap in `DashboardLayout`, add route in [App.tsx](../src/App.tsx) before `"*"`.
+2. Data: Use `useData()` for CRUD. For new types, extend interfaces in [src/data/mockData.ts](../src/data/mockData.ts) and add methods to DataContext.
+3. UI: Use shadcn/ui components from [src/components/ui/](../src/components/ui/).
+4. Navigation: Add to [Sidebar.tsx](../src/components/layout/Sidebar.tsx).
 
 ## Project-Specific Conventions
 
-### Styling & Design System
-- **Tailwind Classes**: Use `cn()` utility from [lib/utils.ts](../src/lib/utils.ts) for conditional classes
-- **Custom Fonts**: `font-sans` (Inter) for body, `font-display` (Outfit) for headings
-- **Color Variants**: Primary (blue), Success (green), Warning (yellow), Danger (red) - see [StatCard.tsx](../src/components/dashboard/StatCard.tsx)
-- **Icons**: Lucide React exclusively (e.g., `Users`, `Dumbbell`, `TrendingUp`)
-- **Animations**: Use `animate-fade-in` and `animate-slide-in-left` Tailwind classes, stagger with `delay-{n}` prop
+- **Tailwind:** Use `cn()` from [lib/utils.ts](../src/lib/utils.ts) for conditional classes.
+- **Fonts:** `font-sans` (Inter) for body, `font-display` (Outfit) for headings.
+- **Colors:** Use variants (primary, success, warning, danger) as in [StatCard.tsx](../src/components/dashboard/StatCard.tsx).
+- **Icons:** Use Lucide React only (e.g., `Users`, `Dumbbell`).
+- **Animations:** Use `animate-fade-in`, `animate-slide-in-left`, stagger with `delay-{n}`.
+- **Custom NavLink:** Use [src/components/NavLink.tsx](../src/components/NavLink.tsx), not react-router-dom's NavLink directly.
+- **Status Styling:**
+  ```tsx
+  const statusStyles = {
+    active: 'bg-emerald-50 text-emerald-700',
+    expired: 'bg-red-50 text-red-700',
+    expiring: 'bg-amber-50 text-amber-700',
+  };
+  ```
+- **TypeScript:** Use `interface` for models. Dates as ISO strings. Status enums as in interfaces.
+- **Import Aliases:** `@/` → `src/` (see [vite.config.ts](../vite.config.ts)).
 
-### Component Patterns
+## Data Management Examples
+
 ```tsx
+import { useData } from '@/contexts/DataContext';
+const { members, addMember, updateMember, deleteMember, exportData, importData, clearAllData } = useData();
+
+exportData(); // Download JSON backup
+importData(jsonString); // Restore from backup
+clearAllData(); // Confirm, then wipe localStorage
+```
+
+## Common Tasks
+
+- **Add Stat Card:**
+  ```tsx
+  <StatCard
+    title="New Metric"
+    value={123}
+    icon={TrendingUp}
+    variant="primary"
+    trend={{ value: 12, isPositive: true }}
+    delay={400}
+  />
+  ```
+- **Add Navigation:** Add `{ to: '/new-page', icon: IconName, label: 'New Feature' }` to Sidebar.
+- **Create Page:** Create in `src/pages/`, wrap in `DashboardLayout`, add route in App.tsx.
+
+## Migration Path: Supabase
+
+When migrating to Supabase:
+1. Use TanStack Query for data fetching/mutation.
+2. Replace DataContext CRUD with `useQuery`/`useMutation`.
+3. Use `supabase` client from [src/integrations/supabase/client.ts](../src/integrations/supabase/client.ts).
+4. Schema matches local data (see [supabase/migrations/](../supabase/migrations/)).
+5. Update DataContext to fetch from Supabase, keep API stable for components.
+6. Migrate pages one at a time, starting with read-only views.
+
+## Known Patterns
+
+- **Mobile-first:** Sidebar uses `lg:` breakpoint for desktop, mobile uses overlay.
+- **Form Validation:** React Hook Form + Zod (installed, not yet used).
+- **Toasts:** Sonner library ([App.tsx](../src/App.tsx)).
+- **Loading:** Skeletons available, not used with mock data.
+- **Error Handling:** NotFound page for 404s, no auth checks (all routes public).
+- **Calendar:** [CalendarView.tsx](../src/pages/CalendarView.tsx) uses `viewMode` state.
+- **Data Export:** FileReader API for import, Blob/URL.createObjectURL for export (see DataContext).
+
+## Critical Notes
+
+⚠️ No real authentication: Login page exists but is not enforced.
+⚠️ LocalStorage only: Data is not synced to cloud/database.
+✅ Export/Import: Backup/restore via JSON works.
+✅ Data survives restarts: localStorage persists across sessions.
+⚠️ Supabase client unused: Integration code exists but not implemented.
+⚠️ No tests: No test infrastructure yet.
+⚠️ Single user mode: No multi-tenancy, all data is shared in browser localStorage.
+⚠️ Browser-specific: Data does not sync across browsers/devices.
 // Correct: Use DataContext for state management
 import { useData } from '@/contexts/DataContext';
 const { members, addMember, updateMember, deleteMember, exportData, importData, clearAllData } = useData();
