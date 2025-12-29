@@ -25,6 +25,7 @@ import MemberDashboard from "./pages/MemberDashboard";
 import MemberCalendarView from "./pages/MemberCalendarView";
 import MemberPaymentHistory from "./pages/MemberPaymentHistory";
 import MemberSettings from "./pages/MemberSettings";
+import MemberTrainingPlan from "./pages/MemberTrainingPlan";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/member-calendar" element={<MemberCalendarView />} />
             <Route path="/member-payments" element={<MemberPaymentHistory />} />
             <Route path="/member-settings" element={<MemberSettings />} />
+            <Route path="/member-training" element={<MemberTrainingPlan />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/members" element={<Members />} />
             <Route path="/plans" element={<MembershipPlans />} />
