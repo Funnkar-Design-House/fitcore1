@@ -1,0 +1,179 @@
+
+
+import { useData } from '../contexts/DataContext';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { StatCard } from '../components/dashboard/StatCard';
+import { Calendar, CreditCard, Clock, Dumbbell } from 'lucide-react';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Button } from '../components/ui/button';
+import { Label } from '../components/ui/label';
+
+export default function MemberDashboard() {
+  const { members, payments, entryLogs, membershipPlans, updateMember } = useData();
+  const [member, setMember] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState({ name: '', phone: '', address: '', email: '' });
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get logged-in memberId from sessionStorage
+    const memberId = sessionStorage.getItem('memberId');
+    if (!memberId) {
+      navigate('/member-login');
+      return;
+    }
+    const found = members.find((m) => m.id === memberId);
+    if (!found) {
+      sessionStorage.removeItem('memberId');
+      navigate('/member-login');
+      return;
+    }
+    setMember(found);
+    setForm({
+      name: found.name || '',
+      phone: found.phone || '',
+      address: found.address || '',
+      email: found.email || '',
+    });
+  }, [members, navigate]);
+
+  if (!member) {
+    return null; // or a loading spinner
+  }
+
+  // Calculate stats for the member
+  const checkInCount = entryLogs.filter(
+    (log) => log.memberId === member.id && log.status === 'allowed'
+  ).length;
+  const lastPayment = payments
+    .filter((p) => p.memberId === member.id)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const plan = membershipPlans.find((p) => p.name === member.plan);
+
+  const handleEdit = () => {
+    setEditMode(true);
+    setSuccess(false);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    updateMember(member.id, {
+      name: form.name,
+      phone: form.phone,
+      address: form.address,
+      email: form.email,
+    });
+    setTimeout(() => {
+      setSaving(false);
+      setEditMode(false);
+      setSuccess(true);
+    }, 600); // Simulate save delay
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto py-8 space-y-8 animate-fade-in">
+      <h1 className="font-display text-3xl font-bold text-foreground mb-2">Welcome, {member.name}</h1>
+      <p className="text-muted-foreground mb-6">Your personalized gym dashboard</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard
+          title="Monthly Check-ins"
+          value={checkInCount}
+          icon={Calendar}
+          variant="primary"
+        />
+        <StatCard
+          title="Last Payment"
+          value={lastPayment ? `₹${lastPayment.amount}` : 'N/A'}
+          icon={CreditCard}
+          variant="success"
+        />
+        <StatCard
+          title="Membership Expiry"
+          value={member.expiryDate ? new Date(member.expiryDate).toLocaleDateString() : 'N/A'}
+          icon={Clock}
+          variant="warning"
+        />
+      </div>
+
+      {/* Profile Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="font-semibold">Your Profile</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {editMode ? (
+            <form onSubmit={handleSave} className="space-y-4 max-w-lg">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" name="name" value={form.name} onChange={handleChange} required />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={form.email} onChange={handleChange} required />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input id="phone" name="phone" value={form.phone} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="address">Address</Label>
+                <Textarea id="address" name="address" value={form.address} onChange={handleChange} rows={2} />
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+                <Button type="button" variant="outline" onClick={() => setEditMode(false)} disabled={saving}>Cancel</Button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-2">
+              <div><span className="font-medium">Name:</span> {member.name}</div>
+              <div><span className="font-medium">Email:</span> {member.email}</div>
+              <div><span className="font-medium">Phone:</span> {member.phone || <span className="text-muted-foreground">Not set</span>}</div>
+              <div><span className="font-medium">Address:</span> {member.address || <span className="text-muted-foreground">Not set</span>}</div>
+              <Button className="mt-2" onClick={handleEdit}>Edit Profile</Button>
+              {success && <div className="text-success text-sm mt-2">Profile updated!</div>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Gym Plan Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Dumbbell className="h-5 w-5" />
+            Your Gym Plan
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {plan ? (
+            <div>
+              <h2 className="font-semibold text-lg mb-2">{plan.name}</h2>
+              <ul className="list-disc ml-6 text-muted-foreground">
+                {plan.features.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+              <p className="mt-2 text-sm text-muted-foreground">Duration: {plan.duration}</p>
+              <p className="text-sm text-muted-foreground">Price: ₹{plan.price}</p>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No plan assigned.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
