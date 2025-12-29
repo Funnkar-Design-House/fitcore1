@@ -26,6 +26,7 @@ export default function Members() {
     name: '',
     phone: '',
     email: '',
+    avatar: '',
     joinDate: new Date().toISOString().split('T')[0],
     dateOfBirth: '',
     gender: '' as 'Male' | 'Female' | 'Other' | '',
@@ -895,8 +896,13 @@ export default function Members() {
           {selectedMember && (
             <div className="space-y-6 mt-4">
               <div className="flex items-center gap-4 pb-4 border-b">
-                <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-2xl font-semibold text-primary">{selectedMember.name.charAt(0)}</span>
+                {/* Avatar display */}
+                <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                  {selectedMember.avatar ? (
+                    <img src={selectedMember.avatar} alt={selectedMember.name} className="h-16 w-16 object-cover rounded-full" />
+                  ) : (
+                    <span className="text-2xl font-semibold text-primary">{selectedMember.name.charAt(0)}</span>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-foreground">{selectedMember.name}</h3>
