@@ -6,21 +6,22 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { Dumbbell } from 'lucide-react';
 
+
 export default function MemberLogin() {
   const { members } = useData();
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const member = members.find((m) => m.email === email.trim());
+    const member = members.find((m) => m.phone === phone.trim());
     if (member) {
       // For demo: store memberId in sessionStorage and redirect
       sessionStorage.setItem('memberId', member.id);
       navigate('/member-dashboard');
     } else {
-      setError('No member found with this email.');
+      setError('No member found with this phone number.');
     }
   };
 
@@ -38,10 +39,10 @@ export default function MemberLogin() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="tel"
+                placeholder="Enter your registered phone number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
                 autoFocus
               />
