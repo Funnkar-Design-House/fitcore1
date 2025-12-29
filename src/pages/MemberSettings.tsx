@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Dumbbell } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
@@ -6,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
+import { MemberLayout } from '../components/layout/MemberLayout';
 
 export default function MemberSettings() {
   const { members, updateMember } = useData();
@@ -46,8 +48,9 @@ export default function MemberSettings() {
   if (!member) return null;
 
   return (
-    <div className="max-w-2xl mx-auto py-8 animate-fade-in">
-      <Card>
+    <MemberLayout>
+      <div className="max-w-2xl mx-auto py-8 animate-fade-in">
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Dumbbell className="h-5 w-5" />
@@ -78,7 +81,8 @@ export default function MemberSettings() {
             {success && <div className="text-success text-sm mt-2">Profile updated!</div>}
           </form>
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </MemberLayout>
   );
 }
