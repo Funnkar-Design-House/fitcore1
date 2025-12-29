@@ -18,6 +18,11 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+
+
+import MemberLogin from "./pages/MemberLogin";
+import MemberDashboard from "./pages/MemberDashboard";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <DataProvider>
@@ -28,6 +33,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            {/* Member login and dashboard routes (separate from admin panel) */}
+            <Route path="/member-login" element={<MemberLogin />} />
+            <Route path="/member-dashboard" element={<MemberDashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/members" element={<Members />} />
             <Route path="/plans" element={<MembershipPlans />} />
