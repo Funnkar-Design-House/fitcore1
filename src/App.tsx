@@ -22,6 +22,9 @@ const queryClient = new QueryClient();
 
 import MemberLogin from "./pages/MemberLogin";
 import MemberDashboard from "./pages/MemberDashboard";
+import MemberCalendarView from "./pages/MemberCalendarView";
+import MemberPaymentHistory from "./pages/MemberPaymentHistory";
+import MemberSettings from "./pages/MemberSettings";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,6 +39,9 @@ const App = () => (
             {/* Member login and dashboard routes (separate from admin panel) */}
             <Route path="/member-login" element={<MemberLogin />} />
             <Route path="/member-dashboard" element={<MemberDashboard />} />
+            <Route path="/member-calendar" element={<MemberCalendarView />} />
+            <Route path="/member-payments" element={<MemberPaymentHistory />} />
+            <Route path="/member-settings" element={<MemberSettings />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/members" element={<Members />} />
             <Route path="/plans" element={<MembershipPlans />} />
