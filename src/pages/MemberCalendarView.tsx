@@ -1,6 +1,8 @@
+
 import { useData } from '../contexts/DataContext';
 import { Calendar } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { MemberLayout } from '../components/layout/MemberLayout';
 
 export default function MemberCalendarView() {
   const { entryLogs } = useData();
@@ -17,7 +19,8 @@ export default function MemberCalendarView() {
   }, [entryLogs]);
 
   return (
-    <div className="max-w-2xl mx-auto py-8 animate-fade-in">
+    <MemberLayout>
+      <div className="max-w-2xl mx-auto py-8 animate-fade-in">
       <div className="flex items-center gap-2 mb-4">
         <Calendar className="h-6 w-6 text-primary" />
         <h2 className="font-display text-2xl font-bold">Calendar View</h2>
@@ -34,6 +37,7 @@ export default function MemberCalendarView() {
           </ul>
         </div>
       )}
-    </div>
+      </div>
+    </MemberLayout>
   );
 }
