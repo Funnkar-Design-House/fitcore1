@@ -1,4 +1,4 @@
-import { MemberNav } from '../components/MemberNav';
+import { MemberLayout } from '../components/layout/MemberLayout';
 import { useEffect, useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useNavigate } from 'react-router-dom';
@@ -86,8 +86,7 @@ export default function MemberDashboard() {
   };
 
   return (
-    <>
-      <MemberNav />
+    <MemberLayout>
       {showCheckIn && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-fade-in">
@@ -129,7 +128,7 @@ export default function MemberDashboard() {
           />
           <StatCard
             title="Last Payment"
-            value={lastPayment ? `₹${lastPayment.amount}` : 'N/A'}
+            value={lastPayment ? new Date(lastPayment.date).toLocaleDateString() : 'N/A'}
             icon={CreditCard}
             variant="success"
           />
@@ -166,6 +165,6 @@ export default function MemberDashboard() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </MemberLayout>
   );
 }
