@@ -1,7 +1,6 @@
-
-
-import { useData } from '../contexts/DataContext';
+import { MemberNav } from '../components/MemberNav';
 import { useEffect, useState } from 'react';
+import { useData } from '../contexts/DataContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { StatCard } from '../components/dashboard/StatCard';
@@ -12,7 +11,8 @@ import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 
 export default function MemberDashboard() {
-  const { members, payments, entryLogs, membershipPlans, updateMember } = useData();
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const { members, payments, entryLogs, membershipPlans, updateMember, addEntryLog } = useData();
   const [member, setMember] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', address: '', email: '' });
@@ -40,6 +40,11 @@ export default function MemberDashboard() {
       address: found.address || '',
       email: found.email || '',
     });
+    // Show check-in popup only on first load after login
+    if (!sessionStorage.getItem('memberCheckedInPrompt')) {
+      setShowCheckIn(true);
+      sessionStorage.setItem('memberCheckedInPrompt', '1');
+    }
   }, [members, navigate]);
 
   if (!member) {
@@ -81,99 +86,86 @@ export default function MemberDashboard() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-8 space-y-8 animate-fade-in">
-      <h1 className="font-display text-3xl font-bold text-foreground mb-2">Welcome, {member.name}</h1>
-      <p className="text-muted-foreground mb-6">Your personalized gym dashboard</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard
-          title="Monthly Check-ins"
-          value={checkInCount}
-          icon={Calendar}
-          variant="primary"
-        />
-        <StatCard
-          title="Last Payment"
-          value={lastPayment ? `₹${lastPayment.amount}` : 'N/A'}
-          icon={CreditCard}
-          variant="success"
-        />
-        <StatCard
-          title="Membership Expiry"
-          value={member.expiryDate ? new Date(member.expiryDate).toLocaleDateString() : 'N/A'}
-          icon={Clock}
-          variant="warning"
-        />
+    <>
+      <MemberNav />
+      {showCheckIn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-fade-in">
+            <h2 className="font-display text-2xl font-bold mb-4">Are you checking in?</h2>
+            <p className="mb-6">Let us know if you're checking into the gym or just browsing.</p>
+            <div className="flex gap-4 justify-center">
+              <Button
+                onClick={() => {
+                  setShowCheckIn(false);
+                  // Record check-in in entry logs
+                  if (member) {
+                    addEntryLog({
+                      memberId: member.id,
+                      memberName: member.name,
+                      timestamp: new Date().toISOString(),
+                      status: 'allowed',
+                    });
+                  }
+                }}
+              >
+                Check In
+              </Button>
+              <Button variant="outline" onClick={() => setShowCheckIn(false)}>
+                Just Browsing
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="max-w-3xl mx-auto py-8 space-y-8 animate-fade-in">
+        <h1 className="font-display text-3xl font-bold text-foreground mb-2">Welcome, {member.name}</h1>
+        <p className="text-muted-foreground mb-6">Your personalized gym dashboard</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            title="Monthly Check-ins"
+            value={checkInCount}
+            icon={Calendar}
+            variant="primary"
+          />
+          <StatCard
+            title="Last Payment"
+            value={lastPayment ? `₹${lastPayment.amount}` : 'N/A'}
+            icon={CreditCard}
+            variant="success"
+          />
+          <StatCard
+            title="Membership Expiry"
+            value={member.expiryDate ? new Date(member.expiryDate).toLocaleDateString() : 'N/A'}
+            icon={Clock}
+            variant="warning"
+          />
+        </div>
+        {/* Gym Plan Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Dumbbell className="h-5 w-5" />
+              Your Gym Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {plan ? (
+              <div>
+                <h2 className="font-semibold text-lg mb-2">{plan.name}</h2>
+                <ul className="list-disc ml-6 text-muted-foreground">
+                  {plan.features.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-sm text-muted-foreground">Duration: {plan.duration}</p>
+                <p className="text-sm text-muted-foreground">Price: ₹{plan.price}</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No plan assigned.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Profile Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="font-semibold">Your Profile</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {editMode ? (
-            <form onSubmit={handleSave} className="space-y-4 max-w-lg">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" value={form.name} onChange={handleChange} required />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" value={form.email} onChange={handleChange} required />
-              </div>
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" name="phone" value={form.phone} onChange={handleChange} />
-              </div>
-              <div>
-                <Label htmlFor="address">Address</Label>
-                <Textarea id="address" name="address" value={form.address} onChange={handleChange} rows={2} />
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
-                <Button type="button" variant="outline" onClick={() => setEditMode(false)} disabled={saving}>Cancel</Button>
-              </div>
-            </form>
-          ) : (
-            <div className="space-y-2">
-              <div><span className="font-medium">Name:</span> {member.name}</div>
-              <div><span className="font-medium">Email:</span> {member.email}</div>
-              <div><span className="font-medium">Phone:</span> {member.phone || <span className="text-muted-foreground">Not set</span>}</div>
-              <div><span className="font-medium">Address:</span> {member.address || <span className="text-muted-foreground">Not set</span>}</div>
-              <Button className="mt-2" onClick={handleEdit}>Edit Profile</Button>
-              {success && <div className="text-success text-sm mt-2">Profile updated!</div>}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Gym Plan Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5" />
-            Your Gym Plan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {plan ? (
-            <div>
-              <h2 className="font-semibold text-lg mb-2">{plan.name}</h2>
-              <ul className="list-disc ml-6 text-muted-foreground">
-                {plan.features.map((f, i) => (
-                  <li key={i}>{f}</li>
-                ))}
-              </ul>
-              <p className="mt-2 text-sm text-muted-foreground">Duration: {plan.duration}</p>
-              <p className="text-sm text-muted-foreground">Price: ₹{plan.price}</p>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">No plan assigned.</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    </>
   );
 }
