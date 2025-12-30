@@ -18,10 +18,10 @@ export default function CalendarView() {
   const [viewMode, setViewMode] = useState<ViewMode>('month');
 
   // Month and year display
-  const monthNames = [
+  const monthNames = useMemo(() => [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  ], []);
 
   // Get the first and last day of the current month
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
