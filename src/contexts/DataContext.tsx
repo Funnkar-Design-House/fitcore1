@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { members as initialMembers, payments as initialPayments, entryLogs as initialEntryLogs, membershipPlans } from '@/data/mockData';
+import { payments as initialPayments, entryLogs as initialEntryLogs, membershipPlans } from '@/data/mockData';
 import type { Member, Payment, EntryLog, MembershipPlan } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DataContextType {
   members: Member[];
@@ -29,20 +30,46 @@ const STORAGE_KEYS = {
 
 export function DataProvider({ children }: { children: ReactNode }) {
   // Initialize state from localStorage or use initial data
-  const [members, setMembers] = useState<Member[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.members);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        console.log('✅ Loaded', parsed.length, 'members from localStorage');
-        return parsed;
+  const [members, setMembers] = useState<Member[]>([]);
+  // Fetch members from Supabase on mount
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('*');
+      if (error) {
+        console.error('❌ Error fetching members from Supabase:', error);
+        setMembers([]);
+      } else {
+        // Map Supabase rows to Member interface if needed
+        setMembers(
+          (data || []).map((row: any) => ({
+            id: row.id,
+            name: row.full_name,
+            phone: row.phone,
+            email: row.email,
+            plan: row.plan_id || '',
+            joinDate: row.join_date,
+            expiryDate: row.expire_date,
+            status: row.status || 'active',
+            avatar: row.avatar_url || '',
+            dateOfBirth: row.date_of_birth || '',
+            gender: row.gender || '',
+            address: row.address || '',
+            emergencyContact: row.emergency_contact || undefined,
+            medicalConditions: row.medical_conditions || '',
+            fitnessGoals: row.fitness_goals || '',
+            bloodGroup: row.blood_group || '',
+            height: row.height || '',
+            weight: row.weight || '',
+            trainerAssigned: row.trainer_assigned || '',
+            notes: row.notes || '',
+          }))
+        );
       }
-    } catch (error) {
-      console.error('❌ Error loading members from localStorage:', error);
-    }
-    console.log('ℹ️ Starting with empty members list');
-    return initialMembers;
-  });
+    };
+    fetchMembers();
+  }, []);
 
   const [payments, setPayments] = useState<Payment[]>(() => {
     try {
@@ -75,14 +102,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   });
 
   // Save to localStorage whenever data changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.members, JSON.stringify(members));
-      console.log('💾 Saved', members.length, 'members to localStorage');
-    } catch (error) {
-      console.error('❌ Error saving members to localStorage:', error);
-    }
-  }, [members]);
+
 
   useEffect(() => {
     try {
@@ -102,12 +122,62 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [entryLogs]);
 
-  const addMember = (member: Omit<Member, 'id'>) => {
-    const newMember: Member = {
-      ...member,
-      id: Date.now().toString(),
-    };
-    setMembers((prev) => [newMember, ...prev]);
+
+  const addMember = async (member: Omit<Member, 'id'>) => {
+    // Map Member to Supabase insert
+    const { data, error } = await supabase.from('members').insert([
+      {
+        full_name: member.name,
+        phone: member.phone,
+        email: member.email,
+        plan_id: member.plan,
+        join_date: member.joinDate,
+        expire_date: member.expiryDate,
+        status: member.status,
+        avatar_url: member.avatar,
+        date_of_birth: member.dateOfBirth,
+        gender: member.gender,
+        address: member.address,
+        emergency_contact: member.emergencyContact,
+        medical_conditions: member.medicalConditions,
+        fitness_goals: member.fitnessGoals,
+        blood_group: member.bloodGroup,
+        height: member.height,
+        weight: member.weight,
+        trainer_assigned: member.trainerAssigned,
+        notes: member.notes,
+      }
+    ]).select();
+    if (error) {
+      console.error('❌ Error adding member to Supabase:', error);
+      return;
+    }
+    // Refetch members after insert
+    const { data: newData } = await supabase.from('members').select('*');
+    setMembers(
+      (newData || []).map((row: any) => ({
+        id: row.id,
+        name: row.full_name,
+        phone: row.phone,
+        email: row.email,
+        plan: row.plan_id || '',
+        joinDate: row.join_date,
+        expiryDate: row.expire_date,
+        status: row.status || 'active',
+        avatar: row.avatar_url || '',
+        dateOfBirth: row.date_of_birth || '',
+        gender: row.gender || '',
+        address: row.address || '',
+        emergencyContact: row.emergency_contact || undefined,
+        medicalConditions: row.medical_conditions || '',
+        fitnessGoals: row.fitness_goals || '',
+        bloodGroup: row.blood_group || '',
+        height: row.height || '',
+        weight: row.weight || '',
+        trainerAssigned: row.trainer_assigned || '',
+        notes: row.notes || '',
+      }))
+    );
   };
 
   const addPayment = (payment: Omit<Payment, 'id'>) => {
@@ -126,11 +196,59 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setEntryLogs((prev) => [newLog, ...prev]);
   };
 
-  const updateMember = (id: string, updates: Partial<Member>) => {
-    setMembers((prev) =>
-      prev.map((member) =>
-        member.id === id ? { ...member, ...updates } : member
-      )
+
+  const updateMember = async (id: string, updates: Partial<Member>) => {
+    // Map updates to Supabase update
+    const { error } = await supabase.from('members').update({
+      full_name: updates.name,
+      phone: updates.phone,
+      email: updates.email,
+      plan_id: updates.plan,
+      join_date: updates.joinDate,
+      expire_date: updates.expiryDate,
+      status: updates.status,
+      avatar_url: updates.avatar,
+      date_of_birth: updates.dateOfBirth,
+      gender: updates.gender,
+      address: updates.address,
+      emergency_contact: updates.emergencyContact,
+      medical_conditions: updates.medicalConditions,
+      fitness_goals: updates.fitnessGoals,
+      blood_group: updates.bloodGroup,
+      height: updates.height,
+      weight: updates.weight,
+      trainer_assigned: updates.trainerAssigned,
+      notes: updates.notes,
+    }).eq('id', id);
+    if (error) {
+      console.error('❌ Error updating member in Supabase:', error);
+      return;
+    }
+    // Refetch members after update
+    const { data: newData } = await supabase.from('members').select('*');
+    setMembers(
+      (newData || []).map((row: any) => ({
+        id: row.id,
+        name: row.full_name,
+        phone: row.phone,
+        email: row.email,
+        plan: row.plan_id || '',
+        joinDate: row.join_date,
+        expiryDate: row.expire_date,
+        status: row.status || 'active',
+        avatar: row.avatar_url || '',
+        dateOfBirth: row.date_of_birth || '',
+        gender: row.gender || '',
+        address: row.address || '',
+        emergencyContact: row.emergency_contact || undefined,
+        medicalConditions: row.medical_conditions || '',
+        fitnessGoals: row.fitness_goals || '',
+        bloodGroup: row.blood_group || '',
+        height: row.height || '',
+        weight: row.weight || '',
+        trainerAssigned: row.trainer_assigned || '',
+        notes: row.notes || '',
+      }))
     );
   };
 
