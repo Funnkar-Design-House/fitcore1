@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Dumbbell } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -11,6 +12,7 @@ import { Label } from '../components/ui/label';
 import { MemberLayout } from '../components/layout/MemberLayout';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 
+export default function MemberSettings() {
   const { members, updateMember } = useData();
   const [member, setMember] = useState(null);
   const [form, setForm] = useState({
@@ -64,8 +66,9 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setForm((prev) => ({ ...prev, avatar: reader.result }));
-        setAvatarPreview(reader.result);
+        const result = reader.result as string;
+        setForm((prev) => ({ ...prev, avatar: result }));
+        setAvatarPreview(result);
       };
       reader.readAsDataURL(file);
     }
