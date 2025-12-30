@@ -37,7 +37,7 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default',
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="mt-2 font-display text-4xl font-bold text-foreground animate-count">
+          <p className="mt-2 font-display text-2xl md:text-3xl font-bold text-foreground animate-count">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
           {trend && (
@@ -46,8 +46,8 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default',
             </p>
           )}
         </div>
-        <div className={`rounded-xl p-3 ${iconStyles[variant]}`}>
-          <Icon className="h-6 w-6" />
+        <div className={`rounded-xl p-2 flex items-center justify-center ${iconStyles[variant]}`} style={{ minWidth: 32, minHeight: 32 }}>
+          <Icon className="h-4 w-4" />
         </div>
       </div>
     </div>
