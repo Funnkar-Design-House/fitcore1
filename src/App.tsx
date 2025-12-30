@@ -7,6 +7,7 @@ import { DataProvider } from "@/contexts/DataContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
+import MembersTestPage from "./pages/MembersTestPage";
 import MembershipPlans from "./pages/MembershipPlans";
 import Payments from "./pages/Payments";
 import EntryLog from "./pages/EntryLog";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/member-training" element={<MemberTrainingPlan />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/members" element={<Members />} />
+            <Route path="/members-test" element={<MembersTestPage />} />
             <Route path="/plans" element={<MembershipPlans />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/entry-log" element={<EntryLog />} />
