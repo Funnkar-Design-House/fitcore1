@@ -15,6 +15,7 @@ import {
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/members', label: 'Members', icon: Users },
+  { path: '/members-test', label: 'Members Test', icon: Users }, // TEMP: For testing Supabase
   { path: '/plans', label: 'Membership Plans', icon: CreditCard },
   { path: '/payments', label: 'Payments', icon: ClipboardList },
   { path: '/entry-log', label: 'Entry Log', icon: LogIn },
