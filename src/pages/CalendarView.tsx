@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useData } from '@/contexts/DataContext';
+import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { useData } from '../contexts/DataContext';
 import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 
 type ViewMode = 'month' | 'year';
