@@ -109,10 +109,10 @@ export default function MemberDashboard() {
   return (
     <MemberLayout>
       {showCheckIn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-fade-in">
-            <h2 className="font-display text-2xl font-bold mb-4">Are you checking in?</h2>
-            <p className="mb-6">Let us know if you're checking into the gym or just browsing.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-primary rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in border-2 border-primary/60">
+            <h2 className="font-display text-2xl font-bold mb-4 text-primary-foreground">Are you checking in?</h2>
+            <p className="mb-6 text-primary-foreground">Let us know if you're checking into the gym or just browsing.</p>
             <div className="flex gap-4 justify-center">
               <Button
                 onClick={() => {
@@ -127,19 +127,35 @@ export default function MemberDashboard() {
                     });
                   }
                 }}
+                className="bg-background text-primary border border-primary hover:bg-primary/10"
               >
                 Check In
               </Button>
-              <Button variant="outline" onClick={() => setShowCheckIn(false)}>
+              <Button variant="outline" onClick={() => setShowCheckIn(false)} className="bg-background text-primary border border-primary hover:bg-primary/10">
                 Just Browsing
               </Button>
             </div>
           </div>
         </div>
       )}
+
       <div className="max-w-3xl mx-auto py-8 space-y-8 animate-fade-in">
-        <h1 className="font-display text-3xl font-bold text-foreground mb-2">Welcome, {member.name}</h1>
-        <p className="text-muted-foreground mb-6">Your personalized gym dashboard</p>
+        <div className="flex items-center gap-4 mb-2">
+          {/* Avatar/Profile Pic */}
+          <div className="flex-shrink-0">
+            {member.avatar ? (
+              <img src={member.avatar} alt={member.name} className="h-14 w-14 rounded-full object-cover border-2 border-primary" />
+            ) : (
+              <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-2xl font-bold text-primary">{member.name?.charAt(0)}</span>
+              </div>
+            )}
+          </div>
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">Welcome, {member.name}</h1>
+            <p className="text-muted-foreground">Your personalized gym dashboard</p>
+          </div>
+        </div>
 
         {/* Motivational Quote Box */}
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-4 flex items-center gap-4 animate-fade-in">
