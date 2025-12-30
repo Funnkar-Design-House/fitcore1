@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { useData } from '../contexts/DataContext';
 import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
@@ -101,7 +101,7 @@ export default function CalendarView() {
   }, [entryLogs, members, payments]);
 
   // Get events for a specific day (with optional year and month parameters)
-  const getEventsForDay = (day: number, month?: number, year?: number): DayEvent[] => {
+  const getEventsForDay = useCallback((day: number, month?: number, year?: number): DayEvent[] => {
     const targetMonth = month !== undefined ? month : currentDate.getMonth();
     const targetYear = year !== undefined ? year : currentDate.getFullYear();
     const dateKey = `${targetYear}-${targetMonth}-${day}`;
@@ -116,7 +116,7 @@ export default function CalendarView() {
         label: `${stats.checkIns} Check-in${stats.checkIns > 1 ? 's' : ''}`
       });
     }
-    
+  
     if (stats.registrations > 0) {
       events.push({
         type: 'registration',
@@ -136,7 +136,7 @@ export default function CalendarView() {
     }
 
     return events;
-  };
+  }, [dailyStats, currentDate]);
 
   // Get upcoming events for sidebar
   const upcomingEvents = useMemo(() => {
@@ -175,7 +175,7 @@ export default function CalendarView() {
     }
 
     return events;
-  }, [dailyStats, currentDate]);
+  }, [dailyStats, getEventsForDay, monthNames]);
 
   // Check if a date is today
   const isToday = (day: number) => {
