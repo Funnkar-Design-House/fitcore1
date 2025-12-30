@@ -1,3 +1,4 @@
+
 import { MemberLayout } from '../components/layout/MemberLayout';
 import { useEffect, useState } from 'react';
 import { useData } from '../contexts/DataContext';
@@ -9,6 +10,20 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
+
+// Motivational quotes (move outside component to avoid hook order issues)
+const motivationalQuotes = [
+  "Push yourself, because no one else is going to do it for you.",
+  "Success starts with self-discipline.",
+  "The body achieves what the mind believes.",
+  "No pain, no gain. Shut up and train.",
+  "Don’t limit your challenges. Challenge your limits.",
+  "It never gets easier, you just get stronger.",
+  "Sweat is fat crying.",
+  "You don’t have to be extreme, just consistent.",
+  "The only bad workout is the one that didn’t happen.",
+  "Strive for progress, not perfection."
+];
 
 export default function MemberDashboard() {
   const [showCheckIn, setShowCheckIn] = useState(false);
@@ -47,11 +62,17 @@ export default function MemberDashboard() {
     }
   }, [members, navigate]);
 
+  // Pick a random quote on each login (ensure motivationalQuotes is not empty)
+  const [quoteIndex, setQuoteIndex] = useState(() =>
+    motivationalQuotes.length > 0 ? Math.floor(Math.random() * motivationalQuotes.length) : 0
+  );
+
   if (!member) {
     return null; // or a loading spinner
   }
 
   // Calculate stats for the member
+  // Only count check-ins that were actually performed (not just logins)
   const checkInCount = entryLogs.filter(
     (log) => log.memberId === member.id && log.status === 'allowed'
   ).length;
@@ -119,6 +140,13 @@ export default function MemberDashboard() {
       <div className="max-w-3xl mx-auto py-8 space-y-8 animate-fade-in">
         <h1 className="font-display text-3xl font-bold text-foreground mb-2">Welcome, {member.name}</h1>
         <p className="text-muted-foreground mb-6">Your personalized gym dashboard</p>
+
+        {/* Motivational Quote Box */}
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-4 flex items-center gap-4 animate-fade-in">
+          <span className="text-3xl text-primary font-bold">“</span>
+          <span className="text-lg font-medium text-primary-foreground flex-1">{motivationalQuotes[quoteIndex]}</span>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             title="Monthly Check-ins"
