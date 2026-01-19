@@ -1,6 +1,21 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { payments as initialPayments, entryLogs as initialEntryLogs, membershipPlans } from '@/data/mockData';
+import { createContext, useContext, useEffect, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { membershipPlans as seedPlans } from '@/data/mockData';
 import type { Member, Payment, EntryLog, MembershipPlan } from '@/data/mockData';
+import {
+  clearAllRemoteData,
+  deleteMemberRow,
+  fetchEntryLogs,
+  fetchMembers,
+  fetchMembershipPlans,
+  fetchPayments,
+  insertEntryLog,
+  insertMember,
+  insertPayment,
+  isSupabaseConfigured,
+  updateMemberRow,
+  updatePaymentRow,
+} from '@/lib/supabaseApi';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DataContextType {
@@ -8,353 +23,227 @@ interface DataContextType {
   payments: Payment[];
   entryLogs: EntryLog[];
   membershipPlans: MembershipPlan[];
-  addMember: (member: Omit<Member, 'id'>) => void;
-  addPayment: (payment: Omit<Payment, 'id'>) => void;
-  addEntryLog: (log: Omit<EntryLog, 'id'>) => void;
-  updateMember: (id: string, member: Partial<Member>) => void;
-  updatePayment: (id: string, payment: Partial<Payment>) => void;
-  deleteMember: (id: string) => void;
+  addMember: (member: Omit<Member, 'id'>) => Promise<string | undefined>;
+  addPayment: (payment: Omit<Payment, 'id'>) => Promise<void>;
+  addEntryLog: (log: Omit<EntryLog, 'id'>) => Promise<void>;
+  updateMember: (id: string, member: Partial<Member>) => Promise<void>;
+  updatePayment: (id: string, payment: Partial<Payment>) => Promise<void>;
+  deleteMember: (id: string) => Promise<void>;
   exportData: () => void;
-  importData: (jsonData: string) => void;
-  clearAllData: () => void;
+  importData: (jsonData: string) => Promise<void>;
+  clearAllData: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// LocalStorage keys
-const STORAGE_KEYS = {
-  members: 'checkinchaser_members',
-  payments: 'checkinchaser_payments',
-  entryLogs: 'checkinchaser_entryLogs',
-};
-
 export function DataProvider({ children }: { children: ReactNode }) {
-  // Initialize state from localStorage or use initial data
-  const [members, setMembers] = useState<Member[]>([]);
-  // Fetch members from Supabase on mount
+  const queryClient = useQueryClient();
+  const supabaseEnabled = isSupabaseConfigured();
+
+  const plansQuery = useQuery({
+    queryKey: ['membership_plans'],
+    queryFn: fetchMembershipPlans,
+    enabled: supabaseEnabled,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const membershipPlans = supabaseEnabled ? plansQuery.data || [] : seedPlans;
+
+  const membersQuery = useQuery({
+    queryKey: ['members'],
+    queryFn: () => fetchMembers(membershipPlans),
+    enabled: supabaseEnabled && membershipPlans.length > 0,
+  });
+
+  const paymentsQuery = useQuery({
+    queryKey: ['payments'],
+    queryFn: () => fetchPayments(membershipPlans, membersQuery.data || []),
+    enabled: supabaseEnabled && !!membersQuery.data,
+  });
+
+  const entryLogsQuery = useQuery({
+    queryKey: ['entry_logs'],
+    queryFn: () => fetchEntryLogs(membersQuery.data || []),
+    enabled: supabaseEnabled && !!membersQuery.data,
+  });
+
+  // Real-time subscriptions to invalidate queries on data change
   useEffect(() => {
-    const fetchMembers = async () => {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*');
-      if (error) {
-        console.error('❌ Error fetching members from Supabase:', error);
-        setMembers([]);
-      } else {
-        // Map Supabase rows to Member interface if needed
-        setMembers(
-          (data || []).map((row: any) => ({
-            id: row.id,
-            name: row.full_name,
-            phone: row.phone,
-            email: row.email,
-            plan: row.plan_id || '',
-            joinDate: row.join_date,
-            expiryDate: row.expire_date,
-            status: row.status || 'active',
-            avatar: row.avatar_url || '',
-            dateOfBirth: row.date_of_birth || '',
-            gender: row.gender || '',
-            address: row.address || '',
-            emergencyContact: row.emergency_contact || undefined,
-            medicalConditions: row.medical_conditions || '',
-            fitnessGoals: row.fitness_goals || '',
-            bloodGroup: row.blood_group || '',
-            height: row.height || '',
-            weight: row.weight || '',
-            trainerAssigned: row.trainer_assigned || '',
-            notes: row.notes || '',
-          }))
-        );
-      }
+    if (!supabaseEnabled) return;
+
+    const channel = supabase
+      .channel('realtime:app')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['members'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['payments'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['entry_logs'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'membership_plans' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['membership_plans'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
-    fetchMembers();
-  }, []);
+  }, [queryClient, supabaseEnabled]);
 
-  const [payments, setPayments] = useState<Payment[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.payments);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        console.log('✅ Loaded', parsed.length, 'payments from localStorage');
-        return parsed;
-      }
-    } catch (error) {
-      console.error('❌ Error loading payments from localStorage:', error);
-    }
-    console.log('ℹ️ Starting with empty payments list');
-    return initialPayments;
+  const addMemberMutation = useMutation({
+    mutationFn: async (member: Omit<Member, 'id'>) => {
+      const plan = membershipPlans.find((p) => p.name === member.plan);
+      const row = await insertMember({ ...member, planId: plan?.id });
+      return row.id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+    },
   });
 
-  const [entryLogs, setEntryLogs] = useState<EntryLog[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.entryLogs);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        console.log('✅ Loaded', parsed.length, 'entry logs from localStorage');
-        return parsed;
-      }
-    } catch (error) {
-      console.error('❌ Error loading entry logs from localStorage:', error);
-    }
-    console.log('ℹ️ Starting with empty entry logs list');
-    return initialEntryLogs;
+  const addPaymentMutation = useMutation({
+    mutationFn: async (payment: Omit<Payment, 'id'>) => {
+      const plan = membershipPlans.find((p) => p.name === payment.plan);
+      await insertPayment({ ...payment, planId: plan?.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+    },
   });
 
-  // Save to localStorage whenever data changes
+  const addEntryMutation = useMutation({
+    mutationFn: async (log: Omit<EntryLog, 'id'>) => insertEntryLog(log),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['entry_logs'] });
+    },
+  });
 
+  const updateMemberMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Member> }) => {
+      const plan = updates.plan ? membershipPlans.find((p) => p.name === updates.plan) : undefined;
+      await updateMemberRow(id, { ...updates, planId: plan?.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+    },
+  });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.payments, JSON.stringify(payments));
-      console.log('💾 Saved', payments.length, 'payments to localStorage');
-    } catch (error) {
-      console.error('❌ Error saving payments to localStorage:', error);
-    }
-  }, [payments]);
+  const updatePaymentMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Payment> }) => {
+      const plan = updates.plan ? membershipPlans.find((p) => p.name === updates.plan) : undefined;
+      await updatePaymentRow(id, { ...updates, planId: plan?.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+    },
+  });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.entryLogs, JSON.stringify(entryLogs));
-      console.log('💾 Saved', entryLogs.length, 'entry logs to localStorage');
-    } catch (error) {
-      console.error('❌ Error saving entry logs to localStorage:', error);
-    }
-  }, [entryLogs]);
-
+  const deleteMemberMutation = useMutation({
+    mutationFn: async (id: string) => deleteMemberRow(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['entry_logs'] });
+    },
+  });
 
   const addMember = async (member: Omit<Member, 'id'>) => {
-    // Map Member to Supabase insert
-    const { data, error } = await supabase.from('members').insert([
-      {
-        full_name: member.name,
-        phone: member.phone,
-        email: member.email,
-        plan_id: member.plan,
-        join_date: member.joinDate,
-        expire_date: member.expiryDate,
-        status: member.status,
-        avatar_url: member.avatar,
-        date_of_birth: member.dateOfBirth,
-        gender: member.gender,
-        address: member.address,
-        emergency_contact: member.emergencyContact,
-        medical_conditions: member.medicalConditions,
-        fitness_goals: member.fitnessGoals,
-        blood_group: member.bloodGroup,
-        height: member.height,
-        weight: member.weight,
-        trainer_assigned: member.trainerAssigned,
-        notes: member.notes,
-      }
-    ]).select();
-    if (error) {
-      console.error('❌ Error adding member to Supabase:', error);
-      return;
-    }
-    // Refetch members after insert
-    const { data: newData } = await supabase.from('members').select('*');
-    setMembers(
-      (newData || []).map((row: any) => ({
-        id: row.id,
-        name: row.full_name,
-        phone: row.phone,
-        email: row.email,
-        plan: row.plan_id || '',
-        joinDate: row.join_date,
-        expiryDate: row.expire_date,
-        status: row.status || 'active',
-        avatar: row.avatar_url || '',
-        dateOfBirth: row.date_of_birth || '',
-        gender: row.gender || '',
-        address: row.address || '',
-        emergencyContact: row.emergency_contact || undefined,
-        medicalConditions: row.medical_conditions || '',
-        fitnessGoals: row.fitness_goals || '',
-        bloodGroup: row.blood_group || '',
-        height: row.height || '',
-        weight: row.weight || '',
-        trainerAssigned: row.trainer_assigned || '',
-        notes: row.notes || '',
-      }))
-    );
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    return addMemberMutation.mutateAsync(member);
   };
 
-  const addPayment = (payment: Omit<Payment, 'id'>) => {
-    const newPayment: Payment = {
-      ...payment,
-      id: Date.now().toString(),
-    };
-    setPayments((prev) => [newPayment, ...prev]);
+  const addPayment = async (payment: Omit<Payment, 'id'>) => {
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    await addPaymentMutation.mutateAsync(payment);
   };
 
-  const addEntryLog = (log: Omit<EntryLog, 'id'>) => {
-    const newLog: EntryLog = {
-      ...log,
-      id: Date.now().toString(),
-    };
-    setEntryLogs((prev) => [newLog, ...prev]);
+  const addEntryLog = async (log: Omit<EntryLog, 'id'>) => {
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    await addEntryMutation.mutateAsync(log);
   };
-
 
   const updateMember = async (id: string, updates: Partial<Member>) => {
-    // Map updates to Supabase update
-    const { error } = await supabase.from('members').update({
-      full_name: updates.name,
-      phone: updates.phone,
-      email: updates.email,
-      plan_id: updates.plan,
-      join_date: updates.joinDate,
-      expire_date: updates.expiryDate,
-      status: updates.status,
-      avatar_url: updates.avatar,
-      date_of_birth: updates.dateOfBirth,
-      gender: updates.gender,
-      address: updates.address,
-      emergency_contact: updates.emergencyContact,
-      medical_conditions: updates.medicalConditions,
-      fitness_goals: updates.fitnessGoals,
-      blood_group: updates.bloodGroup,
-      height: updates.height,
-      weight: updates.weight,
-      trainer_assigned: updates.trainerAssigned,
-      notes: updates.notes,
-    }).eq('id', id);
-    if (error) {
-      console.error('❌ Error updating member in Supabase:', error);
-      return;
-    }
-    // Refetch members after update
-    const { data: newData } = await supabase.from('members').select('*');
-    setMembers(
-      (newData || []).map((row: any) => ({
-        id: row.id,
-        name: row.full_name,
-        phone: row.phone,
-        email: row.email,
-        plan: row.plan_id || '',
-        joinDate: row.join_date,
-        expiryDate: row.expire_date,
-        status: row.status || 'active',
-        avatar: row.avatar_url || '',
-        dateOfBirth: row.date_of_birth || '',
-        gender: row.gender || '',
-        address: row.address || '',
-        emergencyContact: row.emergency_contact || undefined,
-        medicalConditions: row.medical_conditions || '',
-        fitnessGoals: row.fitness_goals || '',
-        bloodGroup: row.blood_group || '',
-        height: row.height || '',
-        weight: row.weight || '',
-        trainerAssigned: row.trainer_assigned || '',
-        notes: row.notes || '',
-      }))
-    );
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    await updateMemberMutation.mutateAsync({ id, updates });
   };
 
-  const updatePayment = (id: string, updates: Partial<Payment>) => {
-    setPayments((prev) =>
-      prev.map((payment) =>
-        payment.id === id ? { ...payment, ...updates } : payment
-      )
-    );
+  const updatePayment = async (id: string, updates: Partial<Payment>) => {
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    await updatePaymentMutation.mutateAsync({ id, updates });
   };
 
-  const deleteMember = (id: string) => {
-    // Find member's last payment and add deactivation note
-    const memberPayments = payments.filter(p => p.memberId === id);
-    if (memberPayments.length > 0) {
-      // Sort by date to find the most recent payment
-      const sortedPayments = [...memberPayments].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      const lastPayment = sortedPayments[0];
-      
-      setPayments((prev) =>
-        prev.map((payment) =>
-          payment.id === lastPayment.id
-            ? { ...payment, notes: 'Member deactivated' }
-            : payment
-        )
-      );
-    }
-    
-    setMembers((prev) => prev.filter((member) => member.id !== id));
+  const deleteMember = async (id: string) => {
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    await deleteMemberMutation.mutateAsync(id);
   };
 
-  // Export all data to a JSON file
   const exportData = () => {
-    try {
-      const data = {
-        members,
-        payments,
-        entryLogs,
-        exportDate: new Date().toISOString(),
-        version: '1.0'
-      };
-      
-      const jsonString = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `checkinchaser-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      console.log('✅ Data exported successfully');
-    } catch (error) {
-      console.error('❌ Error exporting data:', error);
-      alert('Failed to export data. Please try again.');
-    }
+    const data = {
+      members: membersQuery.data || [],
+      payments: paymentsQuery.data || [],
+      entryLogs: entryLogsQuery.data || [],
+      exportDate: new Date().toISOString(),
+      version: '2.0-supabase',
+    };
+
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `checkinchaser-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
-  // Import data from a JSON file/string
-  const importData = (jsonData: string) => {
-    try {
-      const data = JSON.parse(jsonData);
-      
-      if (data.members && Array.isArray(data.members)) {
-        setMembers(data.members);
-        console.log('✅ Imported', data.members.length, 'members');
-      }
-      
-      if (data.payments && Array.isArray(data.payments)) {
-        setPayments(data.payments);
-        console.log('✅ Imported', data.payments.length, 'payments');
-      }
-      
-      if (data.entryLogs && Array.isArray(data.entryLogs)) {
-        setEntryLogs(data.entryLogs);
-        console.log('✅ Imported', data.entryLogs.length, 'entry logs');
-      }
-      
-      alert('Data imported successfully!');
-    } catch (error) {
-      console.error('❌ Error importing data:', error);
-      alert('Failed to import data. Please check the file format.');
+  const importData = async (jsonData: string) => {
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    const parsed = JSON.parse(jsonData);
+    const importedMembers: Member[] = parsed.members || [];
+    const importedPayments: Payment[] = parsed.payments || [];
+    const importedLogs: EntryLog[] = parsed.entryLogs || [];
+
+    // Clear before import
+    await clearAllRemoteData();
+
+    for (const member of importedMembers) {
+      const plan = membershipPlans.find((p) => p.name === member.plan);
+      await insertMember({ ...member, planId: plan?.id });
     }
+
+    for (const payment of importedPayments) {
+      const plan = membershipPlans.find((p) => p.name === payment.plan);
+      await insertPayment({ ...payment, planId: plan?.id });
+    }
+
+    for (const log of importedLogs) {
+      await insertEntryLog(log);
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['members'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['entry_logs'] });
   };
 
-  // Clear all data
-  const clearAllData = () => {
-    if (window.confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
-      setMembers([]);
-      setPayments([]);
-      setEntryLogs([]);
-      console.log('🗑️ All data cleared');
-      alert('All data has been cleared.');
-    }
+  const clearAllData = async () => {
+    if (!supabaseEnabled) throw new Error('Supabase not configured');
+    await clearAllRemoteData();
+    queryClient.invalidateQueries({ queryKey: ['members'] });
+    queryClient.invalidateQueries({ queryKey: ['payments'] });
+    queryClient.invalidateQueries({ queryKey: ['entry_logs'] });
   };
 
   return (
     <DataContext.Provider
       value={{
-        members,
-        payments,
-        entryLogs,
+        members: membersQuery.data || [],
+        payments: paymentsQuery.data || [],
+        entryLogs: entryLogsQuery.data || [],
         membershipPlans,
         addMember,
         addPayment,
@@ -374,7 +263,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 export function useData() {
   const context = useContext(DataContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useData must be used within a DataProvider');
   }
   return context;
