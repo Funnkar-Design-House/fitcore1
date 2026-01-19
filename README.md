@@ -29,29 +29,36 @@ A modern gym management system built with React, TypeScript, and Vite. Currently
 - **Database**: Supabase (configured but not yet connected)
 - **Package Manager**: Bun
 
+git clone https://github.com/Funnkar-Design-House/fitcore1.git
 ## Getting Started
 
 ### Prerequisites
 
 - [Bun](https://bun.sh) installed (or Node.js + npm)
+- Supabase project with SQL from `supabase/migrations/*` applied
+- `.env` with Supabase client keys
 
-### Installation
+### Environment
+
+Create a `.env` in the project root:
 
 ```bash
-# Clone the repository
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-or-service-key
+```
+
+Run the migration in Supabase SQL editor (or `supabase db push`) to create tables, roles, and RLS policies.
+
+### Installation & Run
+
+```bash
 git clone https://github.com/Funnkar-Design-House/fitcore1.git
-
-# Navigate to the project directory
 cd fitcore1
-
-# Install dependencies
 bun install
-
-# Start the development server
 bun run dev
 ```
 
-The application will be available at `http://localhost:8080`
+App: `http://localhost:8080`
 
 ### Build for Production
 
@@ -83,19 +90,25 @@ src/
 
 ## Current State
 
-⚠️ **This project currently uses localStorage for data persistence** - data is managed through DataContext in `src/contexts/DataContext.tsx` and initialized from `src/data/mockData.ts`
+✅ Supabase-backed CRUD for members, payments, entry logs with TanStack Query
+✅ Supabase auth + roles (admin/staff/member) with protected routes
+✅ Export/Import JSON via Supabase
+✅ Real-time invalidation on members/payments/logs
+✅ Full UI/UX implementation
+✅ Enhanced calendar with month/year views
+✅ Upcoming events sidebar
+✅ Database schema defined (see `supabase/migrations`)
+⏳ Stripe/Twilio/marketing/reporting integrations planned
 
-- ✅ Full UI/UX implementation
-- ✅ LocalStorage persistence (data survives refreshes)
-- ✅ Complete CRUD operations for members and payments
-- ✅ Export/Import functionality (download/upload JSON backups)
-- ✅ Data management dashboard with statistics
-- ✅ Clear all data option (with confirmation)
-- ✅ Enhanced calendar with month/year views
-- ✅ Upcoming events sidebar
-- ✅ Supabase client configured
-- ✅ Database schema defined
-- ⏳ API integration pending (easy to migrate from localStorage to Supabase)
+### Auth & Roles
+- Uses Supabase Auth (email/password) via `AuthProvider`
+- Roles stored in `user_roles` (`admin`, `staff`, `member`) with RLS policies
+- Protected routes enforce roles for admin/staff dashboards and member portal
+
+### Data Layer
+- `DataContext` now reads/writes Supabase tables with React Query, plus realtime invalidation
+- Membership plans loaded from Supabase; add/update/delete go through Supabase mutations
+- Export/import uses Supabase data (versioned `2.0-supabase`)
 
 ### Data Persistence
 - **Automatic saves**: All changes automatically saved to browser localStorage
