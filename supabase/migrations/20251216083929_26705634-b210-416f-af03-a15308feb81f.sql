@@ -1,8 +1,12 @@
--- Create app_role enum
-CREATE TYPE public.app_role AS ENUM ('admin', 'staff', 'member');
+-- Create app_role enum (idempotent)
+DO $$ BEGIN
+  CREATE TYPE public.app_role AS ENUM ('admin', 'staff', 'member');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Create profiles table
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   full_name TEXT,
@@ -13,7 +17,7 @@ CREATE TABLE public.profiles (
 );
 
 -- Create user_roles table
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   role app_role NOT NULL,
@@ -21,7 +25,7 @@ CREATE TABLE public.user_roles (
 );
 
 -- Create membership_plans table
-CREATE TABLE public.membership_plans (
+CREATE TABLE IF NOT EXISTS public.membership_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   duration_months INTEGER NOT NULL,
@@ -32,8 +36,21 @@ CREATE TABLE public.membership_plans (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Add is_popular column if it doesn't exist (for existing tables)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'membership_plans' 
+    AND column_name = 'is_popular'
+  ) THEN
+    ALTER TABLE public.membership_plans ADD COLUMN is_popular BOOLEAN DEFAULT false;
+  END IF;
+END $$;
+
 -- Create members table
-CREATE TABLE public.members (
+CREATE TABLE IF NOT EXISTS public.members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name TEXT NOT NULL,
   email TEXT,
@@ -47,7 +64,7 @@ CREATE TABLE public.members (
 );
 
 -- Create payments table
-CREATE TABLE public.payments (
+CREATE TABLE IF NOT EXISTS public.payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   member_id UUID REFERENCES public.members(id) ON DELETE CASCADE NOT NULL,
   plan_id UUID REFERENCES public.membership_plans(id) NOT NULL,
@@ -60,7 +77,7 @@ CREATE TABLE public.payments (
 );
 
 -- Create attendance_logs table
-CREATE TABLE public.attendance_logs (
+CREATE TABLE IF NOT EXISTS public.attendance_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   member_id UUID REFERENCES public.members(id) ON DELETE CASCADE NOT NULL,
   check_in_time TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -166,9 +183,14 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR E
 CREATE TRIGGER update_membership_plans_updated_at BEFORE UPDATE ON public.membership_plans FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 CREATE TRIGGER update_members_updated_at BEFORE UPDATE ON public.members FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
--- Insert default membership plans
-INSERT INTO public.membership_plans (name, duration_months, price, features, is_popular) VALUES
-('Monthly', 1, 999, ARRAY['Full gym access', 'Locker facility', 'Basic fitness assessment'], false),
-('Quarterly', 3, 2499, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (2 sessions)', 'Diet consultation'], true),
-('Half Yearly', 6, 4499, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (6 sessions)', 'Diet consultation', 'Body composition analysis'], false),
-('Annual', 12, 7999, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (12 sessions)', 'Monthly diet consultation', 'Quarterly body analysis', 'Guest passes (4)'], false);
+-- Insert default membership plans (only if table is empty)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.membership_plans LIMIT 1) THEN
+    INSERT INTO public.membership_plans (name, duration_months, price, features, is_popular) VALUES
+    ('Monthly', 1, 999, ARRAY['Full gym access', 'Locker facility', 'Basic fitness assessment'], false),
+    ('Quarterly', 3, 2499, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (2 sessions)', 'Diet consultation'], true),
+    ('Half Yearly', 6, 4499, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (6 sessions)', 'Diet consultation', 'Body composition analysis'], false),
+    ('Annual', 12, 7999, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (12 sessions)', 'Monthly diet consultation', 'Quarterly body analysis', 'Guest passes (4)'], false);
+  END IF;
+END $$;
