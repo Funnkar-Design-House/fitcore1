@@ -1,16 +1,31 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Dumbbell, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setSubmitting(true);
+    setError(null);
+    try {
+      await signIn({ email, password });
+      const redirectTo = (location.state as { from?: string } | null)?.from || '/dashboard';
+      navigate(redirectTo);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to sign in');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -131,8 +146,10 @@ export default function Login() {
               </button>
             </div>
 
-            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 group">
-              Sign In
+            {error && <p className="text-destructive text-sm">{error}</p>}
+
+            <button type="submit" disabled={submitting} className="btn-primary w-full flex items-center justify-center gap-2 group disabled:opacity-60">
+              {submitting ? 'Signing in...' : 'Sign In'}
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </button>
           </form>

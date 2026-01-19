@@ -91,7 +91,7 @@ export default function Members() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Find the selected plan to calculate expiry date
@@ -120,11 +120,8 @@ export default function Members() {
       status = 'expiring';
     }
 
-    // Generate a temporary ID for the new member
-    const memberId = Date.now().toString();
-
     // Add the new member
-    addMember({
+    const memberId = await addMember({
       name: formData.name,
       phone: formData.phone,
       email: formData.email,
@@ -149,9 +146,18 @@ export default function Members() {
       notes: formData.notes || undefined,
     });
 
+    if (!memberId) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create member in Supabase.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Create payment record for the membership fee
-    addPayment({
-      memberId: memberId,
+    await addPayment({
+      memberId,
       memberName: formData.name,
       amount: plan.price,
       method: 'Cash', // Default to Cash, can be changed later
@@ -163,8 +169,8 @@ export default function Members() {
 
     // Create check-in entry for registration day
     const now = new Date();
-    addEntryLog({
-      memberId: memberId,
+    await addEntryLog({
+      memberId,
       memberName: formData.name,
       timestamp: now.toISOString(),
       status: 'allowed',
@@ -199,7 +205,7 @@ export default function Members() {
     setSelectedPlan('');
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedMember) return;
@@ -214,7 +220,7 @@ export default function Members() {
       return;
     }
 
-    updateMember(selectedMember.id, {
+    await updateMember(selectedMember.id, {
       name: formData.name,
       phone: formData.phone,
       email: formData.email,

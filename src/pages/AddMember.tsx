@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { membershipPlans } from '@/data/mockData';
+import { useData } from '@/contexts/DataContext';
 import { UserPlus, ArrowLeft, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function AddMember() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { membershipPlans, addMember } = useData();
   const [selectedPlan, setSelectedPlan] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -16,11 +17,37 @@ export default function AddMember() {
     joinDate: new Date().toISOString().split('T')[0],
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const plan = membershipPlans.find((p) => p.name === selectedPlan);
+    if (!plan) {
+      toast({
+        title: 'Select a plan',
+        description: 'Choose a membership plan before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const joinDate = new Date(formData.joinDate);
+    const expiryDate = new Date(joinDate);
+    expiryDate.setMonth(expiryDate.getMonth() + plan.durationMonths);
+
+    await addMember({
+      name: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      plan: plan.name,
+      joinDate: formData.joinDate,
+      expiryDate: expiryDate.toISOString().split('T')[0],
+      status: 'active',
+      avatar: '',
+    });
+
     toast({
       title: 'Member Added Successfully!',
-      description: `${formData.name} has been registered with ${selectedPlan || 'no plan'}.`,
+      description: `${formData.name} has been registered with ${selectedPlan}.`,
     });
     navigate('/members');
   };

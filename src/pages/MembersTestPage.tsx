@@ -7,8 +7,8 @@ export default function MembersTestPage() {
   const { members, addMember } = useData();
 
   // Simple test add
-  const handleAddTestMember = () => {
-    addMember({
+  const handleAddTestMember = async () => {
+    await addMember({
       name: 'Test User ' + Math.floor(Math.random() * 1000),
       phone: '9999999999',
       email: 'testuser@example.com',

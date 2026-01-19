@@ -119,7 +119,7 @@ export default function Payments() {
     setExportDialogOpen(false);
   };
 
-  const handleAddPayment = (e: React.FormEvent) => {
+  const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.memberId || !formData.planName) {
@@ -175,8 +175,7 @@ export default function Payments() {
       validityEnd.setMonth(validityEnd.getMonth() + plan.durationMonths);
     }
 
-    const newPayment: Payment = {
-      id: `PAY-${Date.now()}`,
+    const newPayment: Omit<Payment, 'id'> = {
       memberId: member.id,
       memberName: member.name,
       amount: paymentAmount,
@@ -188,7 +187,7 @@ export default function Payments() {
       notes: isCustomAmount && paymentAmount < plan.price ? `Partial payment (₹${paymentAmount} of ₹${plan.price})` : undefined,
     };
 
-    addPayment(newPayment);
+    await addPayment(newPayment);
 
     // Update member's expiry date and status
     const daysUntilExpiry = Math.ceil((validityEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -202,7 +201,7 @@ export default function Payments() {
       newStatus = 'active';
     }
 
-    updateMember(member.id, {
+    await updateMember(member.id, {
       expiryDate: validityEnd.toISOString(),
       status: newStatus,
       plan: plan.name,
