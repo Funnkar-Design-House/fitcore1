@@ -121,6 +121,21 @@ AS $$
   )
 $$;
 
+-- Drop existing RLS policies (if any) before recreating
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Staff can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view own roles" ON public.user_roles;
+DROP POLICY IF EXISTS "Admins can manage roles" ON public.user_roles;
+DROP POLICY IF EXISTS "Anyone can view plans" ON public.membership_plans;
+DROP POLICY IF EXISTS "Staff can manage plans" ON public.membership_plans;
+DROP POLICY IF EXISTS "Staff can view all members" ON public.members;
+DROP POLICY IF EXISTS "Staff can manage members" ON public.members;
+DROP POLICY IF EXISTS "Staff can view all payments" ON public.payments;
+DROP POLICY IF EXISTS "Staff can manage payments" ON public.payments;
+DROP POLICY IF EXISTS "Staff can view all logs" ON public.attendance_logs;
+DROP POLICY IF EXISTS "Staff can manage logs" ON public.attendance_logs;
+
 -- RLS Policies for profiles
 CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = user_id);
@@ -164,6 +179,12 @@ BEGIN
 END;
 $$;
 
+DO $$
+BEGIN
+  DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+EXCEPTION WHEN others THEN null;
+END $$;
+
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -188,9 +209,9 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.membership_plans LIMIT 1) THEN
     INSERT INTO public.membership_plans (name, duration_months, price, features, is_popular) VALUES
-    ('Monthly', 1, 999, ARRAY['Full gym access', 'Locker facility', 'Basic fitness assessment'], false),
-    ('Quarterly', 3, 2499, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (2 sessions)', 'Diet consultation'], true),
-    ('Half Yearly', 6, 4499, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (6 sessions)', 'Diet consultation', 'Body composition analysis'], false),
-    ('Annual', 12, 7999, ARRAY['Full gym access', 'Locker facility', 'Personal trainer (12 sessions)', 'Monthly diet consultation', 'Quarterly body analysis', 'Guest passes (4)'], false);
+    ('Monthly', 1, 999, '["Full gym access", "Locker facility", "Basic fitness assessment"]'::jsonb, false),
+    ('Quarterly', 3, 2499, '["Full gym access", "Locker facility", "Personal trainer (2 sessions)", "Diet consultation"]'::jsonb, true),
+    ('Half Yearly', 6, 4499, '["Full gym access", "Locker facility", "Personal trainer (6 sessions)", "Diet consultation", "Body composition analysis"]'::jsonb, false),
+    ('Annual', 12, 7999, '["Full gym access", "Locker facility", "Personal trainer (12 sessions)", "Monthly diet consultation", "Quarterly body analysis", "Guest passes (4)"]'::jsonb, false);
   END IF;
 END $$;
